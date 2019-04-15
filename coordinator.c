@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <ctype.h> 
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdlib.h>
-
 
 int load_coordinator_argv(int argc, char **argv, int *MaxNumOfCashiers)
 {
@@ -34,7 +31,7 @@ int main(int argc, char **argv)
 		
 		return 0;
 	}
-	
+
 	printf("%d\n", MaxNumOfCashiers);
 
 	//create shared memory
