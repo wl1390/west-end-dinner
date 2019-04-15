@@ -3,9 +3,10 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 
-int check_coordinator_argv(int argc, char **argv)
+int load_coordinator_argv(int argc, char **argv, int *MaxNumOfCashiers)
 {
 	int i;
 
@@ -16,19 +17,25 @@ int check_coordinator_argv(int argc, char **argv)
 		if (!isdigit(argv[2][i])) return 0;
 	} 
 
+	*MaxNumOfCashiers = atoi(argv[2]);
+
 	return 1;
 }
 
 
 int main(int argc, char **argv)
 {
-	if (!check_coordinator_argv(argc, argv))
+	int MaxNumOfCashiers;
+
+	if (!load_coordinator_argv(argc, argv, &MaxNumOfCashiers))
 	{
-		printf("ERROR: initiation command should follow the below format:\n");
+		printf("ERROR: coordinator initiation should follow the below format:\n");
 		printf("\t./coordinator -n MaxNumOfCashiers\n");
 		
 		return 0;
 	}
+	
+	printf("%d\n", MaxNumOfCashiers);
 
 	//create shared memory
 	//load the menu into shared memory
