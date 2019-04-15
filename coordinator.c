@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h> 
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 
 int check_coordinator_argv(int argc, char **argv)
@@ -19,7 +21,7 @@ int check_coordinator_argv(int argc, char **argv)
 
 
 int main(int argc, char **argv)
-{	
+{
 	if (!check_coordinator_argv(argc, argv))
 	{
 		printf("ERROR: initiation command should follow the below format:\n");
@@ -28,17 +30,11 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	//get pid and output (shmid)
-
-	//starting code goes here
-	//cashier space
-	//server space
-	//dining table
-	//cashier waiting queue
-	//server waiting queue
-	//entire client queue
-	//internal statistics
-
+	//create shared memory
+	//load the menu into shared memory
+	//wait for the day to complete
+	//collect data 
+	//release sys resource
 
 	return 0;
 }
