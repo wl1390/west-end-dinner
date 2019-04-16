@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <ctype.h> 
 #include <string.h>
+#include <sys/shm.h>
+
+#include "macro.h"
 
 
 int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmid)
@@ -54,6 +57,12 @@ int main(int argc, char **argv)
 	int eatTime;
 	int shmid;
 
+	pid_t pid;
+
+	int err;
+	struct ClientInfo *clients;
+
+
 	if (!load_client_argv(argc, argv, &itemId, &eatTime, &shmid))
 	{
 		printf("ERROR: client initiation should follow the below format:\n");
@@ -62,10 +71,37 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	printf("%d\n%d\n%d\n", itemId, eatTime, shmid);
+	pid = getpid();
 
-	//if restaurant not open, leave. 
-	
+
+	/* Attach the segment */
+	clients = (struct ClientInfo *) shmat(shmid, (void*) 0,SHM_RDONLY);
+	// if (*(int *) AcceptClients == -1) perror("Attachment.");
+	// else printf(">> Attached Shared Segment whose Mem content is: %d\n",*AcceptClients);
+
+
+	if ((*clients).AcceptClients == 0)
+	{
+		printf("Restaurant is not open. Client [%d] is leaving...\n", pid);
+	}
+	else if ((*clients).AcceptClients == 1)
+	{
+		//give pid to the list
+		printf("good\n");
+	}
+
+
+	/* Detach segment */
+	err = shmdt((void *)clients);
+	// if (err == -1) perror ("Detachment.");
+	// else printf(">> Detachment of Shared Segment %d\n", err);
+	return 0;
+
+
+
+
+	//if restaurant not accepting or not open, leave. 
+
 	//arrive and check MaxPeople. If full, leave terminate.
 
 	//add to cashier desk
