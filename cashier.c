@@ -63,6 +63,9 @@ int main(int argc, char **argv)
 
 	printf("%d\n%d\n%d\n", serviceTime, breakTime, shmid);
 
+	
+	//get shared segment 
+
 	//while restaurant open
 		//if no people in the line, break
 		//pick a client

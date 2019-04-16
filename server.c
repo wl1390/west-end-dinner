@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 
 	printf("%d\n", shmid);
 
+	//get shared segment 
+
 	//while restaurant is open
 		//wait for order from cashier
 		//give food to client
