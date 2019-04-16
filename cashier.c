@@ -63,5 +63,11 @@ int main(int argc, char **argv)
 
 	printf("%d\n%d\n%d\n", serviceTime, breakTime, shmid);
 
+	//while restaurant open
+		//if no people in the line, break
+		//pick a client
+		//take the order
+		//give it to the server
+
 	return 0;
 }

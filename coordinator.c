@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+//MaxNumOfClients
+//MaxNumOfCashiers
+
 int load_coordinator_argv(int argc, char **argv, int *MaxNumOfCashiers)
 {
 	int i;

@@ -64,5 +64,21 @@ int main(int argc, char **argv)
 
 	printf("%d\n%d\n%d\n", itemId, eatTime, shmid);
 
+	//if restaurant not open, leave. 
+	
+	//arrive and check MaxPeople. If full, leave terminate.
+
+	//add to cashier desk
+	//wait for available cashier
+	//order food and pay to cashier
+
+	//add to service desk
+	//wait to get food from server
+	//get food from server
+
+	//add to dining desk
+	//eat the food 
+
+	//terminate
 	return 0;
 }

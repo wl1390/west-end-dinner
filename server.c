@@ -34,5 +34,9 @@ int main(int argc, char **argv)
 
 	printf("%d\n", shmid);
 
+	//while restaurant is open
+		//wait for order from cashier
+		//give food to client
+
 	return 0;
 }
