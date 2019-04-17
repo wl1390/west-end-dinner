@@ -4,7 +4,7 @@
 
 struct Client
 {	
-	int pid;
+	pid_t pid;
 	int itemId;
 	int status;
 };
