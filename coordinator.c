@@ -21,7 +21,6 @@ int main(int argc, char **argv)
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
  	getchar();
 
-
  	inspect(shm);
  	getchar();
 	/* Remove segment */

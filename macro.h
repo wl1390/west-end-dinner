@@ -4,7 +4,7 @@
 
 struct Client
 {	
-	int pid;
+	pid_t pid;
 	int itemId;
 	int status;
 };
@@ -69,6 +69,7 @@ void inspect(struct SharedMemory *shm)
 {	
 	// int i;
 	printf("we have %d of clients.\n", shm->NumOfClients);
+	
 	//there is a bug with this statment
 	printf("client %d.\n", (*shm).clients[0]->status);
 

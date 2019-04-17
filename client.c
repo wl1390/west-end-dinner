@@ -58,10 +58,11 @@ int main(int argc, char **argv)
 	int itemId;
 	int eatTime;
 	int shmid;
-	int pid;
+	pid_t pid;
 	int err;
 	struct SharedMemory *shm;
 	
+	pid = getpid();
 
 	if (!load_client_argv(argc, argv, &itemId, &eatTime, &shmid))
 	{
@@ -73,7 +74,6 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	pid  = 5;
 	struct Client client = {pid, itemId, 0};
 	
 	printf("%d\n", client.pid);
