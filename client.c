@@ -58,9 +58,7 @@ int main(int argc, char **argv)
 	int itemId;
 	int eatTime;
 	int shmid;
-
-	pid_t pid;
-
+	int pid;
 	int err;
 	struct SharedMemory *shm;
 	
@@ -75,7 +73,8 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	struct Client client = {getpid(), itemId, 0};
+	pid  = getpid();
+	struct Client client = {pid, itemId, 0};
 	
 	printf("%d\n", client.pid);
 	printf("%d\n", client.itemId);
