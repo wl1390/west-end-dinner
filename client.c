@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	pid  = getpid();
+	pid  = 5;
 	struct Client client = {pid, itemId, 0};
 	
 	printf("%d\n", client.pid);
