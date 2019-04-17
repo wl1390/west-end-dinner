@@ -10,40 +10,23 @@ int main(int argc, char **argv)
 {	
 	int id = 0;
 	int err = 0;
-	struct ClientInfo *clients;
-	// int *AcceptClients;
+	struct SharedMemory *shm;
 
-	id = shmget(IPC_PRIVATE, 1, 0666|IPC_CREAT);
-
-	// if (id == -1) 
-	// 	perror ("Creation");
-	// else 	
-		printf("Allocated Shared Memory with ID: %d\n",(int)id);
-
-	// AcceptClients = (int *) shmat(id, (void*)0, 0);
-	clients = (struct ClientInfo *) shmat(id, (void*)0, 0);
-
-	// if ( *(int *) AcceptClients == -1) 
-	// 	perror("Attachment.");
-	// else 
-	// 	printf("Just Attached Shared Memory whose content is: %d\n",*AcceptClients);
-
-	(*clients).AcceptClients=1;
-	// printf("Just Altered Shared Memory content to: %d\n",*AcceptClients);
-
-	printf("Start other process. >"); getchar();
-
-	// /* Print out new value */
-	// printf("Content of Shared Mem is now: %d\n", *mem);
-
-	/* Remove segment */
-	err = shmctl(id, IPC_RMID, 0);
-	// if (err == -1) 
-	// 	perror ("Removal.");
-	// else 
-	// 	printf("Just Removed Shared Segment. %d\n", (int)(err));
+	id = shmget(IPC_PRIVATE, 1, 0666|IPC_CREAT); if (id == -1) perror ("Creation");
 	
+	shm = (struct SharedMemory *) shmat(id, (void*)0, 0);
 
+	initiateSharedMemory(shm);
+	printf("%d\n", (*shm).NumOfClients);
+	printf("Allocated Shared Memory with ID: %d\n",(int)id);
+ 	getchar();
+
+
+ 	inspect(shm);
+ 	getchar();
+	/* Remove segment */
+	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");
+	
 
 
 	//open the restaurant 
