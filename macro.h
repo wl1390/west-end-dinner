@@ -69,7 +69,8 @@ void inspect(struct SharedMemory *shm)
 {	
 	// int i;
 	printf("we have %d of clients.\n", shm->NumOfClients);
-	printf("client %d.\n", (*shm).clients[0]->pid);
+	//there is a bug with this statment
+	printf("client %d.\n", (*shm).clients[0]->status);
 
 	// for(i = 0; i < MaxNumOfClients; i++)
 	// {
