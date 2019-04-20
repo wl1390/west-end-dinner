@@ -74,14 +74,7 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	struct Client client = {pid, itemId, 0};
-	
-	printf("%d\n", client.pid);
-	printf("%d\n", client.itemId);
-	printf("%d\n", client.status);
-
-
-	addClient(&client, shm);
+	addClient(pid, shm);
 	getchar();
 	
 	/* Detach segment */
