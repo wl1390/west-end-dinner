@@ -56,7 +56,7 @@ int addClient(int pid, struct SharedMemory *shm)
 
 void inspect(struct SharedMemory *shm)
 {	
-	// int i;
+	int i;
 	printf("we have %d of clients.\n", shm->numOfClients);
 	
 	for(i = 0; i < MaxNumOfClients; i++)

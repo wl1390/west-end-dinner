@@ -17,7 +17,6 @@ int main(int argc, char **argv)
 	shm = (struct SharedMemory *) shmat(id, (void*)0, 0);
 
 	initiateSharedMemory(shm);
-	printf("%d\n", (*shm).NumOfClients);
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
  	getchar();
 
