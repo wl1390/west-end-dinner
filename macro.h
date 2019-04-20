@@ -40,7 +40,7 @@ int addClient(int pid, struct SharedMemory *shm)
 
 		for(i = 0; i < MaxNumOfClients; i++)
 		{
-			if ((*shm).clients[i] != 0)
+			if ((*shm).clients[i] == 0)
 			{
 				(*shm).clients[i] = pid;
 				break;
@@ -48,6 +48,29 @@ int addClient(int pid, struct SharedMemory *shm)
 		}
 
 	}
+
+	//Release Lock
+
+	return 1;
+}
+
+int removeClient(int pid, struct SharedMemory *shm)
+{	
+	int i;
+
+	//acqure lock
+	
+	(*shm).numOfClients--;
+
+	for(i = 0; i < MaxNumOfClients; i++)
+	{
+		if ((*shm).clients[i] == pid)
+		{
+			(*shm).clients[i] = 0;
+			break;
+		}
+	}
+
 
 	//Release Lock
 

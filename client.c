@@ -74,10 +74,13 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
+	printf("client %d comes.\n", pid);
+
 	addClient(pid, shm);
 	getchar();
 	
 	/* Detach segment */
+	removeClient(pid,shm);
 	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 
 	//arrive and check MaxPeople. If full, leave terminate.
