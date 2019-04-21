@@ -68,21 +68,24 @@ int main(int argc, char **argv)
 	{
 		printf("ERROR: client initiation should follow the below format:\n");
 		printf("\t./client -i itemId -e eatTime -m shmid\n");
-		
 		return 0;
 	}
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
 	printf("client %d comes.\n", pid);
-	addClient(pid, shm);
+	if (addClient(shm, pid) == 0)
+	{
+		printf("Restaurant full. Client [%d] leaving...\n", pid);
+		return 0;
+	}
+
 	getchar();
 	
 	/* Detach segment */
-	removeClient(pid,shm);
+	removeClient(shm, pid);
 	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 
-	//arrive and check MaxPeople. If full, leave terminate.
 
 	//add to cashier desk
 	//wait for available cashier

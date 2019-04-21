@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/shm.h>
+#include <time.h>
 
 #include "macro.h"
 
@@ -18,33 +19,27 @@ int main(int argc, char **argv)
 
 	initiateSharedMemory(shm);
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
-	while(1)
-	{
-		getchar();
-		inspect(shm);
-	}
 
- 	destroySharedMemory(shm);
-	/* Remove segment */
-	//TODO is this destrop this segment?
-	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");
-	
-
-
-	//open the restaurant 
-	//create shared memory
 	//load the menu into shared memory
 	//load server and cashiers processes
-	//start acccepting clients and start counter
-	//while counter on
-		//monitor client lists
+	
+	operateRestaurant(shm, 1);
+	// while(1) //some condition
+	// {
+		getchar();
+	// 	inspect(shm);
+	// }
 
-	//stop accepting new clients and wait for all client process to finish
-	//close the restaurant
+	operateRestaurant(shm, 0);
+
+	//wait for all cashier and server?
 	//collect data 
-	//wait for all cashier and server
-	//release sys resource
-	//exit
+
+
+
+	/* Remove segment */
+	destroySharedMemory(shm);
+	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");
 
 	return 0;
 }
