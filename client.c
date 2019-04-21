@@ -76,7 +76,6 @@ int main(int argc, char **argv)
 
 	printf("client %d comes.\n", pid);
 	addClient(pid, shm);
-	printf("client %d added to list\n", pid);
 	getchar();
 	
 	/* Detach segment */
