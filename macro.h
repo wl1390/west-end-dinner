@@ -9,7 +9,7 @@ struct SharedMemory
 {
 	int numOfClients;
 	int clients[MaxNumOfClients];
-	sem_t clientsp;
+	sem_t *semaphore;
 };
 
 
@@ -28,11 +28,10 @@ int initiateSharedMemory(struct SharedMemory *shm){
 		(*shm).clients[i] = 0;
 	}
 
-	retval = sem_init(&((*shm).clientsp),1,1);
-	if (retval != 0) {
-		perror("Couldn't initialize.");
-		exit(1);
-	}
+	(*shm).semaphore = sem_open("/semaphore", O_CREAT, 0644, 1);
+	sem_getvalue((*shm).semaphore, &retval);
+	printf("current sem value is %d.\n", retval);
+
 
 	return 1;
 }
@@ -50,8 +49,8 @@ int addClient(int pid, struct SharedMemory *shm)
 	int retval;
 
 	//acqure lock
-	retval = sem_wait(&((*shm).clientsp));
-	printf("retval wait is %d\n", retval);
+	sem_wait((*shm).semaphore);
+	printf("acquired lock.\n");
 
 	if ((*shm).numOfClients >= MaxNumOfClients)
 	{
@@ -71,12 +70,10 @@ int addClient(int pid, struct SharedMemory *shm)
 		}
 
 	}
-
+	getchar();
 	//Release Lock
-	retval = sem_post(&((*shm).clientsp));
-	printf("retval post is %d\n", retval);
-
-	
+	sem_post((*shm).semaphore);
+	printf("released lock.\n");
 
 	return 1;
 }
@@ -85,11 +82,11 @@ int removeClient(int pid, struct SharedMemory *shm)
 {	
 	int i;
 	int retval;
-	//acqure lock
-	retval = sem_wait(&((*shm).clientsp));
-	printf("retval wait is %d\n", retval);
+	// //acqure lock
+	sem_wait((*shm).semaphore);
 
-	
+	printf("acquired lock.\n");
+
 	(*shm).numOfClients--;
 
 	for(i = 0; i < MaxNumOfClients; i++)
@@ -101,9 +98,10 @@ int removeClient(int pid, struct SharedMemory *shm)
 		}
 	}
 
+	getchar();
 	//Release Lock
-	retval = sem_post(&((*shm).clientsp));
-	printf("retval post is %d\n", retval);
+	sem_post((*shm).semaphore);
+	printf("released lock.\n");
 
 	return 1;
 }
