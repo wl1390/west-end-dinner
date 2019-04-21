@@ -1,10 +1,10 @@
 all: coordinator cashier client server
 
 coordinator.o: coordinator.c 
-	gcc -g -c coordinator.c -o coordinator.o
+	gcc -g -c coordinator.c -o coordinator.o -lpthread
 
 coordinator: coordinator.o
-	gcc -g coordinator.o -o coordinator
+	gcc -g coordinator.o -o coordinator -lpthread
 
 cashier.o: cashier.c 
 	gcc -g -c cashier.c -o cashier.o
@@ -13,10 +13,10 @@ cashier: cashier.o
 	gcc -g cashier.o -o cashier
 
 client.o: client.c 
-	gcc -g -c client.c -o client.o
+	gcc -g -c client.c -o client.o -lpthread
 
 client: client.o
-	gcc -g client.o -o client
+	gcc -g client.o -o client -lpthread
 
 server.o: server.c 
 	gcc -g -c server.c -o server.o

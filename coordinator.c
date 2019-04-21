@@ -18,10 +18,11 @@ int main(int argc, char **argv)
 
 	initiateSharedMemory(shm);
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
- 	getchar();
-
- 	inspect(shm);
- 	getchar();
+	while(1)
+	{
+		getchar();
+		inspect(shm);
+	}
 
  	destroySharedMemory(shm);
 	/* Remove segment */

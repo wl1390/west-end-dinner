@@ -1,4 +1,5 @@
-#include	<semaphore.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 
 #define MaxNumOfClients	  50
@@ -9,7 +10,7 @@ struct SharedMemory
 {
 	int numOfClients;
 	int clients[MaxNumOfClients];
-	sem_t *semaphore;
+	sem_t sp;
 };
 
 
@@ -19,8 +20,7 @@ struct SharedMemory
 int initiateSharedMemory(struct SharedMemory *shm){
 
 	int i;
-	int retval;
-
+	
 	(*shm).numOfClients = 0;
 
 	for (i = 0; i < MaxNumOfClients; i++){
@@ -28,17 +28,15 @@ int initiateSharedMemory(struct SharedMemory *shm){
 		(*shm).clients[i] = 0;
 	}
 
-	(*shm).semaphore = sem_open("/semaphore", O_CREAT, 0644, 1);
-	sem_getvalue((*shm).semaphore, &retval);
-	printf("current sem value is %d.\n", retval);
-
+	printf("initializing semaphore value to 1\n");
+	sem_init(&(*shm).sp,1,1);
 
 	return 1;
 }
 
 int destroySharedMemory(struct SharedMemory *shm){
 
-	//destrop shared memory
+	sem_destroy(&(*shm).sp);
 
 	return 1;
 }
@@ -46,12 +44,10 @@ int destroySharedMemory(struct SharedMemory *shm){
 int addClient(int pid, struct SharedMemory *shm)
 {	
 	int i;
-	int retval;
-
-	//acqure lock
-	sem_wait((*shm).semaphore);
-	printf("acquired lock.\n");
-
+	sem_wait(&(*shm).sp);
+	printf("acquired lock\n");
+	printf("adding client %d to list...\n", pid);
+	
 	if ((*shm).numOfClients >= MaxNumOfClients)
 	{
 		printf("Restaurant full. Client [%d] leaving...\n", pid);
@@ -70,10 +66,10 @@ int addClient(int pid, struct SharedMemory *shm)
 		}
 
 	}
+	
 	getchar();
-	//Release Lock
-	sem_post((*shm).semaphore);
-	printf("released lock.\n");
+	sem_post(&(*shm).sp);
+	printf("releasd lock\n");	
 
 	return 1;
 }
@@ -81,11 +77,9 @@ int addClient(int pid, struct SharedMemory *shm)
 int removeClient(int pid, struct SharedMemory *shm)
 {	
 	int i;
-	int retval;
-	// //acqure lock
-	sem_wait((*shm).semaphore);
-
-	printf("acquired lock.\n");
+	sem_wait(&(*shm).sp);
+	printf("acquired lock\n");
+	printf("removing client %d to list...\n", pid);
 
 	(*shm).numOfClients--;
 
@@ -99,9 +93,8 @@ int removeClient(int pid, struct SharedMemory *shm)
 	}
 
 	getchar();
-	//Release Lock
-	sem_post((*shm).semaphore);
-	printf("released lock.\n");
+	sem_post(&(*shm).sp);
+	printf("releasd lock\n");
 
 	return 1;
 }

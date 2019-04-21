@@ -75,7 +75,6 @@ int main(int argc, char **argv)
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
 	printf("client %d comes.\n", pid);
-
 	addClient(pid, shm);
 	printf("client %d added to list\n", pid);
 	getchar();
