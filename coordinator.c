@@ -22,7 +22,10 @@ int main(int argc, char **argv)
 
  	inspect(shm);
  	getchar();
+
+ 	destroySharedMemory(shm);
 	/* Remove segment */
+	//TODO is this destrop this segment?
 	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");
 	
 

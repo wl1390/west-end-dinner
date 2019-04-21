@@ -1,3 +1,6 @@
+#include	<semaphore.h>
+
+
 #define MaxNumOfClients	  50
 #define MaxNumOfCashiers  5
 #define MaxNumOfServer	  1
@@ -6,7 +9,9 @@ struct SharedMemory
 {
 	int numOfClients;
 	int clients[MaxNumOfClients];
+	sem_t clientsp;
 };
+
 
 // All operations on the shared memory happens here 
 // All functions needs lock
@@ -14,6 +19,7 @@ struct SharedMemory
 int initiateSharedMemory(struct SharedMemory *shm){
 
 	int i;
+	int retval;
 
 	(*shm).numOfClients = 0;
 
@@ -22,14 +28,31 @@ int initiateSharedMemory(struct SharedMemory *shm){
 		(*shm).clients[i] = 0;
 	}
 
+	retval = sem_init(&((*shm).clientsp),1,1);
+	if (retval != 0) {
+		perror("Couldn't initialize.");
+		exit(1);
+	}
+
+	return 1;
+}
+
+int destroySharedMemory(struct SharedMemory *shm){
+
+	//destrop shared memory
+
 	return 1;
 }
 
 int addClient(int pid, struct SharedMemory *shm)
 {	
 	int i;
+	int retval;
 
 	//acqure lock
+	retval = sem_wait(&((*shm).clientsp));
+	printf("retval wait is %d\n", retval);
+
 	if ((*shm).numOfClients >= MaxNumOfClients)
 	{
 		printf("Restaurant full. Client [%d] leaving...\n", pid);
@@ -50,6 +73,10 @@ int addClient(int pid, struct SharedMemory *shm)
 	}
 
 	//Release Lock
+	retval = sem_post(&((*shm).clientsp));
+	printf("retval post is %d\n", retval);
+
+	
 
 	return 1;
 }
@@ -57,8 +84,11 @@ int addClient(int pid, struct SharedMemory *shm)
 int removeClient(int pid, struct SharedMemory *shm)
 {	
 	int i;
-
+	int retval;
 	//acqure lock
+	retval = sem_wait(&((*shm).clientsp));
+	printf("retval wait is %d\n", retval);
+
 	
 	(*shm).numOfClients--;
 
@@ -71,8 +101,9 @@ int removeClient(int pid, struct SharedMemory *shm)
 		}
 	}
 
-
 	//Release Lock
+	retval = sem_post(&((*shm).clientsp));
+	printf("retval post is %d\n", retval);
 
 	return 1;
 }
