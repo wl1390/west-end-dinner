@@ -11,6 +11,7 @@ int main(int argc, char **argv)
 {	
 	int id = 0;
 	int err = 0;
+	int i;
 	struct SharedMemory *shm;
 
 	id = shmget(IPC_PRIVATE, 1, 0666|IPC_CREAT); if (id == -1) perror ("Creation");
@@ -19,22 +20,45 @@ int main(int argc, char **argv)
 
 	initiateSharedMemory(shm);
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
-
-	//load the menu into shared memory
-	//load server and cashiers processes
 	
+	printf("Opening the restaurant\n");
 	operateRestaurant(shm, 1);
-	// while(1) //some condition
-	// {
-		getchar();
-	// 	inspect(shm);
-	// }
 
+	//TODO load the menu into shared memory
+
+	printf("Creating cashiers and server\n");
+	char id_string[16];
+	sprintf(id_string, "%d", id);
+	char *cashierargs[] = {"./cashier", "-s", SERVICETIME, "-b", BREAKTIME, "-m", id_string, NULL};
+	char *serverargs[] = {"./server", "-m", id_string, NULL};
+
+	if (fork() == 0)
+	{	
+		printf("starting server...\n");
+		execvp(serverargs[0], serverargs);
+		exit(1);
+	}
+
+	for (i = 0; i < MaxNumOfCashiers; i++)
+	{
+		if (fork() == 0)
+		{
+			printf("starting cahsier...\n");
+			execvp(cashierargs[0], cashierargs);
+			exit(1);
+		}
+	}
+
+	printf("Closing the restaurant\n");
 	operateRestaurant(shm, 0);
 
-	//wait for all cashier and server?
-	//collect data 
+	while(wait(NULL) > 0);
 
+
+	printf("all worker done ...\n");
+	
+
+	//TODO collect data  and analyze
 
 
 	/* Remove segment */

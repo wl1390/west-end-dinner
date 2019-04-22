@@ -2,6 +2,7 @@
 #include <ctype.h> 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/shm.h>
 
 int load_server_argv(int argc, char **argv, int *shmid)
 {
@@ -23,6 +24,10 @@ int load_server_argv(int argc, char **argv, int *shmid)
 int main(int argc, char **argv)
 {
 	int shmid;
+	int err;
+	struct SharedMemory *shm;
+
+	pid_t pid;
 
 	if (!load_server_argv(argc, argv, &shmid))
 	{
@@ -32,13 +37,25 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	printf("%d\n", shmid);
+	pid = getpid();
 
-	//get shared segment 
+	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	//while restaurant is open
-		//wait for order from cashier
-		//give food to client
+	printf("server %d starts working...\n", pid);
+
+	
+
+
+
+
+	//wait for order from cashier
+	//give food to client
+
+
+
+
+
+	printf("server %d finishesworking...\n", pid);
 
 	return 0;
 }

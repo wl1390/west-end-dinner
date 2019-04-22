@@ -53,6 +53,11 @@ int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmi
 }
 
 
+int orderClient(struct SharedMemory *shm, int pid, int itemId)
+{
+	
+}
+
 int main(int argc, char **argv)
 {
 	int itemId;
@@ -62,8 +67,7 @@ int main(int argc, char **argv)
 	int err;
 	struct SharedMemory *shm;
 	
-	pid = getpid();
-
+	
 	if (!load_client_argv(argc, argv, &itemId, &eatTime, &shmid))
 	{
 		printf("ERROR: client initiation should follow the below format:\n");
@@ -71,20 +75,19 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	pid = getpid();
+
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	printf("client %d comes.\n", pid);
 	if (addClient(shm, pid) == 0)
 	{
 		printf("Restaurant full. Client [%d] leaving...\n", pid);
 		return 0;
 	}
 
-	getchar();
-	
-	/* Detach segment */
-	removeClient(shm, pid);
-	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
+	printf("client %d enters...\n", pid);
+
+
 
 
 	//add to cashier desk
@@ -98,6 +101,18 @@ int main(int argc, char **argv)
 	//add to dining desk
 	//eat the food 
 
-	//terminate
+
+	getchar();
+	
+
+
+
+
+
+	/* Detach segment */
+	removeClient(shm, pid);
+	printf("client %d leaves...\n", pid);
+
+	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 	return 0;
 }

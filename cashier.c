@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h> 
 #include <string.h>
+#include <sys/shm.h>
 
 int load_cashier_argv(int argc, char **argv, int *serviceTime, int *breakTime, int *shmid)
 {
@@ -52,6 +53,9 @@ int main(int argc, char **argv)
 	int serviceTime;
 	int breakTime;
 	int shmid;
+	int err;
+	pid_t pid;
+	struct SharedMemory *shm;
 
 	if (!load_cashier_argv(argc, argv, &serviceTime, &breakTime, &shmid))
 	{
@@ -61,16 +65,25 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	printf("%d\n%d\n%d\n", serviceTime, breakTime, shmid);
+	pid = getpid();
 
-	
-	//get shared segment 
+	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	//while restaurant open
-		//if no people in the line, break
-		//pick a client
-		//take the order
-		//give it to the server
+	printf("Cashier %d starts work.\n", pid);
+
+
+
+	//if no people in the line, break
+	//pick a client
+	//take the order
+	//give it to the server
+
+
+
+
+
+	printf("Cashier %d finishes work.\n", pid);
+	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 
 	return 0;
 }

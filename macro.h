@@ -2,9 +2,9 @@
 #include <fcntl.h>
 
 #define MaxNumOfClients	  	50
-#define MaxNumOfCashiers  	5
-#define MaxNumOfServer	  	1
-#define OpenTime			
+#define MaxNumOfCashiers  	3
+#define SERVICETIME			"2000"
+#define BREAKTIME			"5000"		
 
 struct SharedMemory
 {
@@ -57,8 +57,6 @@ int addClient(struct SharedMemory *shm, int pid)
 	if ((*shm).numOfClients == 0)
 		sem_wait(&(*shm).sp2);
 
-	printf("adding client %d to list...\n", pid);
-
 	(*shm).numOfClients++;
 
 	for(i = 0; i < MaxNumOfClients; i++)
@@ -83,9 +81,7 @@ int removeClient(struct SharedMemory *shm, int pid)
 
 	sem_wait(&(*shm).sp);
 	printf("acquired lock\n");
-
-	printf("removing client %d to list...\n", pid);
-
+	
 	(*shm).numOfClients--;
 
 	for(i = 0; i < MaxNumOfClients; i++)
