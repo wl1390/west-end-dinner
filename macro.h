@@ -4,7 +4,8 @@
 #define MaxNumOfClients	  	50
 #define MaxNumOfCashiers  	3
 #define SERVICETIME			5
-#define BREAKTIME			5		
+#define BREAKTIME			20	
+#define SERVERTIME			5	
 
 struct SharedMemory
 {
@@ -18,11 +19,15 @@ struct SharedMemory
 	int orders[MaxNumOfClients];
 	int waiting_clients[MaxNumOfClients];
 	int ready;
+	int waiting;
+	int wantfood;
 	sem_t sp1; //locks when client enters/leaves restaurant
 	sem_t sp2; //locks when there is client in the restaurant
 	sem_t sp3; //locks when there is no cashier available 
 	sem_t sp4; //locks when client is ordering 
 	sem_t sp5; //locks between cashiers and server
+	sem_t sp6; //locks to notify cleint waiting time
+	sem_t sp7; // locks to give client food
 
 };
 
@@ -46,6 +51,7 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	(*shm).count = 0;
 	(*shm).numOfClients = 0;
 	(*shm).open = 0;
+	(*shm).wantfood = 0;
 
 	for (i = 0; i < MaxNumOfClients; i++)
 	{
@@ -66,6 +72,9 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	sem_init(&(*shm).sp3,1,MaxNumOfCashiers);
 	sem_init(&(*shm).sp4,1,1);
 	sem_init(&(*shm).sp5,1,1);
+	sem_init(&(*shm).sp6,1,1);
+	sem_init(&(*shm).sp7,1,1);
+
 
 	return 1;
 }
@@ -77,8 +86,15 @@ int destroySharedMemory(struct SharedMemory *shm){
 	sem_destroy(&(*shm).sp3);
 	sem_destroy(&(*shm).sp4);
 	sem_destroy(&(*shm).sp5);
-
+	sem_destroy(&(*shm).sp6);
+	sem_destroy(&(*shm).sp7);
 	return 1;
+}
+
+int getWaitingTime(int itemId)
+{
+	//needs to implement 
+	return 5;
 }
 
 int clientEnter(struct SharedMemory *shm, int pid)

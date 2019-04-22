@@ -78,7 +78,6 @@ int main(int argc, char **argv)
 
 	//TODO collect data  and analyze
 
-
 	/* Remove segment */
 	destroySharedMemory(shm);
 	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");

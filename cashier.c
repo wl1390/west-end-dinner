@@ -81,6 +81,7 @@ int main(int argc, char **argv)
 	srand(getpid());
 	while((*shm).open == 1)
 	{	
+		sleep(1);
 		if ((*shm).ordering[cashierNumber] == 0)
 		{	
 			int temp = rand()%breakTime + 1;
@@ -92,18 +93,20 @@ int main(int argc, char **argv)
 			int temp = rand()%serviceTime + 1;
 			order = (*shm).ordering[cashierNumber];
 			client = (*shm).ordering_clients[cashierNumber];
-			printf("Client %d orders %d. Cashier %d takes the order in %d seconds...\n", client, order, cashierNumber, temp);
-			sem_wait(&(*shm).sp5);
-			(*shm).count++;
-			(*shm).waiting_clients[(*shm).start] = client;
-			(*shm).orders[(*shm).start] = order;
-			//also add to file
-			sem_post(&(*shm).sp5);
+			
+			// sem_wait(&(*shm).sp5);
+			// //communicate to the server might not be necessary
+			// (*shm).count++;
+			// (*shm).waiting_clients[(*shm).start] = client;
+			// (*shm).orders[(*shm).start] = order;
+			// //also add to file
+			// sem_post(&(*shm).sp5);
+			printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
 			sleep(temp);
 			sem_wait(&(*shm).sp4);
 			(*shm).ordering[cashierNumber] = 0;
 			(*shm).ordering_clients[cashierNumber] = 0;
-			sem_post(&(*shm).sp4);
+			
 			printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
 			sem_post(&(*shm).sp3);
 		}

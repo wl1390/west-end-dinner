@@ -79,13 +79,22 @@ int main(int argc, char **argv)
 	cashier = order(shm, pid, itemId);
 
 	while((*shm).ordering[cashier] != 0) continue;
+	sem_post(&(*shm).sp4);
 
 	printf("client %d finishes ordering\n", pid);
 
-	while((*shm).ready != pid) continue;
+
+	int temp = getWaitingTime(itemId);
+	sleep(temp);
+
+	sem_wait(&(*shm).sp6);
+	(*shm).waiting = 1;
+	while((*shm).waiting != 0) continue;
+	sem_post(&(*shm).sp6);
+
 
 	srand(pid);
-	int temp = rand()%eatTime + 1;
+	temp = rand()%eatTime + 1;
 
 	printf("client %d food ready, now spend %d second eating...\n", pid, eatTime);
 

@@ -21,24 +21,16 @@ int main(int argc, char **argv)
 
 	printf("server starts working...\n");
 
+
 	while((*shm).open == 1)
 	{
-		if ((*shm).count != 0)
+		if ((*shm).waiting != 0)
 		{
-			sem_wait(&(*shm).sp5);
-			client = (*shm).waiting_clients[(*shm).start];
-			order = (*shm).orders[(*shm).start];
-			(*shm).count--;
-			(*shm).start = ((*shm).start + 1) % MaxNumOfClients;
-			sem_post(&(*shm).sp5);
-
-			int temp = 5;
-
-			//shoudl be according to the menu
+			int temp = rand()%SERVERTIME + 1;
 			sleep(temp);
-			printf("food for client %d is ready.\n", client);
-			(*shm).ready = client;
-		}	
+			(*shm).waiting = 0;
+		}
+
 	}
 
 	printf("server finishes working...\n");
