@@ -13,6 +13,7 @@ struct SharedMemory
 	int clients[MaxNumOfClients];
 	int orders[MaxNumOfCashiers];
 	int ordering_clients[MaxNumOfCashiers];
+	int ready;
 	sem_t sp1; //locks when client enters/leaves restaurant
 	sem_t sp2; //locks when there is client in the restaurant
 	sem_t sp3; //locks when there is no cashier available 

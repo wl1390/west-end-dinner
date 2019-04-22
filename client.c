@@ -88,23 +88,14 @@ int main(int argc, char **argv)
 
 	printf("client %d finishes ordering\n", pid);
 
-	getchar();
+	while((*shm.ready != pid)) continue;
 
+	srand(pid);
+	int temp = rand()%eatTime + 1;
 
+	printf("client %d food ready, now spend %d second eating...\n", pid, eatTime;);
 
-	//add to cashier desk
-	//wait for available cashier
-	//order food and pay to cashier
-
-	//add to service desk
-	//wait to get food from server
-	//get food from server
-
-	//add to dining desk
-	//eat the food 
-
-
-
+	sleep(temp);
 
 	/* Detach segment */
 	clientLeave(shm, pid);
