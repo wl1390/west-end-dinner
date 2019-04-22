@@ -20,21 +20,23 @@ int main(int argc, char **argv)
 
 	initiateSharedMemory(shm);
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
-	
 	printf("Opening the restaurant\n");
-	operateRestaurant(shm, 1);
+
+	sem_wait(&(*shm).sp2);
+	(*shm).open = 1;
+	sem_post(&(*shm).sp2);
 
 	//TODO load the menu into shared memory
 
 	printf("Creating cashiers and server\n");
-	char id_string[16];
-	sprintf(id_string, "%d", id);
-	char *cashierargs[] = {"./cashier", "-s", SERVICETIME, "-b", BREAKTIME, "-m", id_string, NULL};
-	char *serverargs[] = {"./server", "-m", id_string, NULL};
 
 	if (fork() == 0)
 	{	
+
 		printf("starting server...\n");
+		char id_string[16];
+		sprintf(id_string, "%d", id);
+		char *serverargs[] = {"./server", "-m", id_string, NULL};
 		execvp(serverargs[0], serverargs);
 		exit(1);
 	}
@@ -43,14 +45,27 @@ int main(int argc, char **argv)
 	{
 		if (fork() == 0)
 		{
-			printf("starting cahsier...\n");
+			printf("starting cahsier %d...\n", i);
+			char id_string[16];
+			char cahsierNumber[16];
+			char serviceTime[16];
+			char breakTime[16];
+			sprintf(id_string, "%d", id);
+			sprintf(cahsierNumber, "%d", i);
+			sprintf(serviceTime, "%d", SERVICETIME);
+			sprintf(breakTime, "%d", BREAKTIME);
+			char *cashierargs[] = {"./cashier", "-i", cahsierNumber,"-s", serviceTime, "-b", breakTime, "-m", id_string, NULL};
 			execvp(cashierargs[0], cashierargs);
 			exit(1);
 		}
 	}
 
+	getchar();
+
 	printf("Closing the restaurant\n");
-	operateRestaurant(shm, 0);
+	sem_wait(&(*shm).sp2);
+	(*shm).open = 0;
+	sem_post(&(*shm).sp2);
 
 	while(wait(NULL) > 0);
 

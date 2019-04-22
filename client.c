@@ -52,12 +52,6 @@ int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmi
 	return 1;
 }
 
-
-int orderClient(struct SharedMemory *shm, int pid, int itemId)
-{
-	
-}
-
 int main(int argc, char **argv)
 {
 	int itemId;
@@ -65,6 +59,7 @@ int main(int argc, char **argv)
 	int shmid;
 	pid_t pid;
 	int err;
+	int cashier;
 	struct SharedMemory *shm;
 	
 	
@@ -79,7 +74,7 @@ int main(int argc, char **argv)
 
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	if (addClient(shm, pid) == 0)
+	if (clientEnter(shm, pid) == 0)
 	{
 		printf("Restaurant full. Client [%d] leaving...\n", pid);
 		return 0;
@@ -87,6 +82,13 @@ int main(int argc, char **argv)
 
 	printf("client %d enters...\n", pid);
 
+	cashier = order(shm, pid, itemId);
+
+	while((*shm).orders[cashier] != 0) continue;
+
+	printf("client %d finishes ordering\n", pid);
+
+	getchar();
 
 
 
@@ -102,15 +104,10 @@ int main(int argc, char **argv)
 	//eat the food 
 
 
-	getchar();
-	
-
-
-
 
 
 	/* Detach segment */
-	removeClient(shm, pid);
+	clientLeave(shm, pid);
 	printf("client %d leaves...\n", pid);
 
 	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
