@@ -8,18 +8,17 @@
 
 #include "macro.h"
 
-int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTime, int *breakTime, int *shmid)
+int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTime, int *breakTime)
 {
 	int i;
 	int j;
 	int s = 0;
 	int b = 0;
-	int m = 0;
 	int c = 0;
 
-	if ((argc != 9)) return 0;
+	if ((argc != 7)) return 0;
 
-	for (i = 2; i < 9; i+=2)
+	for (i = 2; i < 7; i+=2)
 	{
 		for (j = 0; j < strlen(argv[i]); j++)
 		{
@@ -27,7 +26,7 @@ int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTim
 		} 
 	}
 	
-	for (i = 1; i < 8; i+=2)
+	for (i = 1; i < 6; i+=2)
 	{
 		if (!strcmp(argv[i], "-s"))
 		{
@@ -39,11 +38,6 @@ int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTim
 			b = 1;
 			*breakTime = atoi(argv[i+1]);
 		}
-		else if (!strcmp(argv[i], "-m"))
-		{
-			m = 1;
-			*shmid = atoi(argv[i+1]);
-		}
 		else if (!strcmp(argv[i], "-i"))
 		{
 			c = 1;
@@ -52,7 +46,7 @@ int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTim
 
 	}
 
-	if ( (m+b+s+c) != 4)	return 0;
+	if ( (b+s+c) != 3)	return 0;
 
 	return 1;
 }
@@ -63,28 +57,31 @@ int main(int argc, char **argv)
 	int cashierNumber;
 	int serviceTime;
 	int breakTime;
-	int shmid;
 	int err;
 	int order;
 	int client;
 	struct SharedMemory *shm;
+	int shmid;
 
-	if (!load_cashier_argv(argc, argv, &cashierNumber, &serviceTime, &breakTime, &shmid))
+
+	if (!load_cashier_argv(argc, argv, &cashierNumber, &serviceTime, &breakTime))
 	{
 		printf("ERROR: cashier initiation should follow the below format:\n");
-		printf("\t./cashier -i cashierNumber -s serviceTime -b breakTime -m shmid\n");
+		printf("\t./cashier -i cashierNumber -s serviceTime -b breakTime\n");
 		
 		return 0;
 	}
 
+	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
+	
 
 	printf("Cashier %d starts work.\n", cashierNumber);
 
 	srand(getpid());
 	while((*shm).open == 1)
-	{
-		if ((*shm).orders[cashierNumber] == 0)
+	{	
+		if ((*shm).ordering[cashierNumber] == 0)
 		{	
 			int temp = rand()%breakTime + 1;
 			printf("Cashier %d has no client, taking a %d second break...\n", cashierNumber, temp);
@@ -93,13 +90,18 @@ int main(int argc, char **argv)
 		else
 		{	
 			int temp = rand()%serviceTime + 1;
-			order = (*shm).orders[cashierNumber];
+			order = (*shm).ordering[cashierNumber];
 			client = (*shm).ordering_clients[cashierNumber];
 			printf("Client %d orders %d. Cashier %d takes the order in %d seconds...\n", client, order, cashierNumber, temp);
-			//record and send server
+			sem_wait(&(*shm).sp5);
+			(*shm).count++;
+			(*shm).waiting_clients[(*shm).start] = client;
+			(*shm).orders[(*shm).start] = order;
+			//also add to file
+			sem_post(&(*shm).sp5);
 			sleep(temp);
 			sem_wait(&(*shm).sp4);
-			(*shm).orders[cashierNumber] = 0;
+			(*shm).ordering[cashierNumber] = 0;
 			(*shm).ordering_clients[cashierNumber] = 0;
 			sem_post(&(*shm).sp4);
 			printf("Cashier %d finishes with client %d...\n", cashierNumber, client);

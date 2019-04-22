@@ -11,16 +11,30 @@ struct SharedMemory
 	int open;
 	int numOfClients;
 	int clients[MaxNumOfClients];
-	int orders[MaxNumOfCashiers];
+	int ordering[MaxNumOfCashiers];
 	int ordering_clients[MaxNumOfCashiers];
+	int start;
+	int count;
+	int orders[MaxNumOfClients];
+	int waiting_clients[MaxNumOfClients];
 	int ready;
 	sem_t sp1; //locks when client enters/leaves restaurant
 	sem_t sp2; //locks when there is client in the restaurant
 	sem_t sp3; //locks when there is no cashier available 
 	sem_t sp4; //locks when client is ordering 
+	sem_t sp5; //locks between cashiers and server
 
 };
 
+void getSharedMemory(int *shmid)
+{
+	char buffer[16];
+	FILE *fp;
+	fp = fopen("memoryId", "r");
+	fscanf(fp,"%s", buffer);
+	*shmid = atoi(buffer);
+	return;
+}
 
 // All operations on the shared memory happens here 
 
@@ -28,17 +42,21 @@ int initiateSharedMemory(struct SharedMemory *shm){
 
 	int i;
 	
+	(*shm).start = 0;
+	(*shm).count = 0;
 	(*shm).numOfClients = 0;
 	(*shm).open = 0;
 
 	for (i = 0; i < MaxNumOfClients; i++)
 	{
 		(*shm).clients[i] = 0;
+		(*shm).waiting_clients[i] = 0;
+		(*shm).orders[i] = 0;
 	}
 
 	for (i = 0; i < MaxNumOfCashiers; i++)
 	{
-		(*shm).orders[i] = 0;
+		(*shm).ordering[i] = 0;
 		(*shm).ordering_clients[i] = 0;
 	}
 
@@ -47,6 +65,7 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	sem_init(&(*shm).sp2,1,1);
 	sem_init(&(*shm).sp3,1,MaxNumOfCashiers);
 	sem_init(&(*shm).sp4,1,1);
+	sem_init(&(*shm).sp5,1,1);
 
 	return 1;
 }
@@ -57,6 +76,7 @@ int destroySharedMemory(struct SharedMemory *shm){
 	sem_destroy(&(*shm).sp2);
 	sem_destroy(&(*shm).sp3);
 	sem_destroy(&(*shm).sp4);
+	sem_destroy(&(*shm).sp5);
 
 	return 1;
 }
@@ -130,9 +150,9 @@ int order(struct SharedMemory *shm, int pid, int itemId)
 	{	
 		cashier = (cashier + 1) % MaxNumOfCashiers;
 
-		if ((*shm).orders[cashier] == 0)
+		if ((*shm).ordering[cashier] == 0)
 		{
-			(*shm).orders[cashier] = itemId;
+			(*shm).ordering[cashier] = itemId;
 			(*shm).ordering_clients[cashier] = pid;
 			break;
 		}

@@ -9,17 +9,16 @@
 #include "macro.h"
 
 
-int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmid)
+int load_client_argv(int argc, char **argv, int *itemId, int *eatTime)
 {
 	int i;
 	int j;
 	int t = 0;
 	int e = 0;
-	int m = 0;
 
-	if ((argc != 7)) return 0;
+	if ((argc != 5)) return 0;
 
-	for (i = 2; i < 7; i+=2)
+	for (i = 2; i < 5; i+=2)
 	{
 		for (j = 0; j < strlen(argv[i]); j++)
 		{
@@ -27,7 +26,7 @@ int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmi
 		} 
 	}
 	
-	for (i = 1; i < 6; i+=2)
+	for (i = 1; i < 4; i+=2)
 	{
 		if (!strcmp(argv[i], "-i"))
 		{
@@ -39,15 +38,10 @@ int load_client_argv(int argc, char **argv, int *itemId, int *eatTime, int *shmi
 			e = 1;
 			*eatTime = atoi(argv[i+1]);
 		}
-		else if (!strcmp(argv[i], "-m"))
-		{
-			m = 1;
-			*shmid = atoi(argv[i+1]);
-		}
 
 	}
 
-	if ( (t+e+m) != 3)	return 0;
+	if ( (t+e) != 2)	return 0;
 
 	return 1;
 }
@@ -56,22 +50,22 @@ int main(int argc, char **argv)
 {
 	int itemId;
 	int eatTime;
-	int shmid;
 	pid_t pid;
 	int err;
 	int cashier;
 	struct SharedMemory *shm;
+	int shmid;
 	
-	
-	if (!load_client_argv(argc, argv, &itemId, &eatTime, &shmid))
+	if (!load_client_argv(argc, argv, &itemId, &eatTime))
 	{
 		printf("ERROR: client initiation should follow the below format:\n");
-		printf("\t./client -i itemId -e eatTime -m shmid\n");
+		printf("\t./client -i itemId -e eatTime\n");
 		return 0;
 	}
 
 	pid = getpid();
 
+	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
 	if (clientEnter(shm, pid) == 0)
@@ -84,16 +78,16 @@ int main(int argc, char **argv)
 
 	cashier = order(shm, pid, itemId);
 
-	while((*shm).orders[cashier] != 0) continue;
+	while((*shm).ordering[cashier] != 0) continue;
 
 	printf("client %d finishes ordering\n", pid);
 
-	while((*shm.ready != pid)) continue;
+	while((*shm).ready != pid) continue;
 
 	srand(pid);
 	int temp = rand()%eatTime + 1;
 
-	printf("client %d food ready, now spend %d second eating...\n", pid, eatTime;);
+	printf("client %d food ready, now spend %d second eating...\n", pid, eatTime);
 
 	sleep(temp);
 

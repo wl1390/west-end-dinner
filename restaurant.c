@@ -13,13 +13,20 @@ int main(int argc, char **argv)
 	int err = 0;
 	int i;
 	struct SharedMemory *shm;
+	FILE *fp;
 
 	id = shmget(IPC_PRIVATE, 1, 0666|IPC_CREAT); if (id == -1) perror ("Creation");
 	
 	shm = (struct SharedMemory *) shmat(id, (void*)0, 0);
 
 	initiateSharedMemory(shm);
+	
+	fp = fopen("memoryId", "w");
+	fprintf(fp, "%d",id);
+	fclose(fp);
+
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
+
 	printf("Opening the restaurant\n");
 
 	sem_wait(&(*shm).sp2);
@@ -34,9 +41,7 @@ int main(int argc, char **argv)
 	{	
 
 		printf("starting server...\n");
-		char id_string[16];
-		sprintf(id_string, "%d", id);
-		char *serverargs[] = {"./server", "-m", id_string, NULL};
+		char *serverargs[] = {"./server", NULL};
 		execvp(serverargs[0], serverargs);
 		exit(1);
 	}
@@ -46,15 +51,13 @@ int main(int argc, char **argv)
 		if (fork() == 0)
 		{
 			printf("starting cahsier %d...\n", i);
-			char id_string[16];
 			char cahsierNumber[16];
 			char serviceTime[16];
 			char breakTime[16];
-			sprintf(id_string, "%d", id);
 			sprintf(cahsierNumber, "%d", i);
 			sprintf(serviceTime, "%d", SERVICETIME);
 			sprintf(breakTime, "%d", BREAKTIME);
-			char *cashierargs[] = {"./cashier", "-i", cahsierNumber,"-s", serviceTime, "-b", breakTime, "-m", id_string, NULL};
+			char *cashierargs[] = {"./cashier", "-i", cahsierNumber,"-s", serviceTime, "-b", breakTime, NULL};
 			execvp(cashierargs[0], cashierargs);
 			exit(1);
 		}

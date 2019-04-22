@@ -8,58 +8,40 @@
 
 #include "macro.h"
 
-int load_server_argv(int argc, char **argv, int *shmid)
-{
-	int i;
-
-	if ((argc != 3) || (strcmp(argv[1], "-m"))) return 0;
-	
-	for (i = 0; i < strlen(argv[2]); i++)
-	{
-		if (!isdigit(argv[2][i])) return 0;
-	} 
-
-	*shmid = atoi(argv[2]);
-
-	return 1;
-}
-
-
 int main(int argc, char **argv)
 {
-	int shmid;
 	int err;
 	struct SharedMemory *shm;
+	int client;
+	int order;
+	int shmid;
 
-	pid_t pid;
-
-	if (!load_server_argv(argc, argv, &shmid))
-	{
-		printf("ERROR: server initiation should follow the below format:\n");
-		printf("\t./server -m shmid\n");
-		
-		return 0;
-	}
-
-	pid = getpid();
-
+	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	printf("server %d starts working...\n", pid);
+	printf("server starts working...\n");
 
-	
+	while((*shm).open == 1)
+	{
+		if ((*shm).count != 0)
+		{
+			sem_wait(&(*shm).sp5);
+			client = (*shm).waiting_clients[(*shm).start];
+			order = (*shm).orders[(*shm).start];
+			(*shm).count--;
+			(*shm).start = ((*shm).start + 1) % MaxNumOfClients;
+			sem_post(&(*shm).sp5);
 
+			int temp = 5;
 
+			//shoudl be according to the menu
+			sleep(temp);
+			printf("food for client %d is ready.\n", client);
+			(*shm).ready = client;
+		}	
+	}
 
-
-	//wait for order from cashier
-	//give food to client
-
-
-
-
-
-	printf("server %d finishesworking...\n", pid);
+	printf("server finishes working...\n");
 
 	return 0;
 }

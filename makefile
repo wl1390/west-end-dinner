@@ -1,10 +1,10 @@
-all: coordinator cashier client server
+all: restaurant cashier client server
 
-coordinator.o: coordinator.c 
-	gcc -g -c coordinator.c -o coordinator.o -lpthread
+restaurant.o: restaurant.c 
+	gcc -g -c restaurant.c -o restaurant.o -lpthread
 
-coordinator: coordinator.o
-	gcc -g coordinator.o -o coordinator -lpthread
+restaurant: restaurant.o
+	gcc -g restaurant.o -o restaurant -lpthread
 
 cashier.o: cashier.c 
 	gcc -g -c cashier.c -o cashier.o -lpthread
@@ -25,11 +25,12 @@ server: server.o
 	gcc -g server.o -o server -lpthread
 
 clean:
-	rm -f coordinator.o
-	rm -f coordinator
+	rm -f restaurant.o
+	rm -f restaurant
 	rm -f server.o
 	rm -f server
 	rm -f client.o
 	rm -f client
 	rm -f cashier.o
 	rm -f cashier
+	rm -f memoryId
