@@ -25,8 +25,9 @@ int main(int argc, char **argv)
 	while((*shm).open == 1)
 	{
 		if ((*shm).waiting != 0)
-		{
+		{	
 			int temp = rand()%SERVERTIME + 1;
+			printf("sleeping %d to serviign \n", temp);
 			sleep(temp);
 			(*shm).waiting = 0;
 		}

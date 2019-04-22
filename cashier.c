@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 	
 
-	printf("Cashier %d starts work.\n", cashierNumber);
+	// printf("Cashier %d starts work.\n", cashierNumber);
 
 	srand(getpid());
 	while((*shm).open == 1)
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 		if ((*shm).ordering[cashierNumber] == 0)
 		{	
 			int temp = rand()%breakTime + 1;
-			printf("Cashier %d has no client, taking a %d second break...\n", cashierNumber, temp);
+			// printf("Cashier %d has no client, taking a %d second break...\n", cashierNumber, temp);
 			sleep(temp);
 		}
 		else
@@ -101,18 +101,18 @@ int main(int argc, char **argv)
 			// (*shm).orders[(*shm).start] = order;
 			// //also add to file
 			// sem_post(&(*shm).sp5);
-			printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
+			// printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
 			sleep(temp);
 			sem_wait(&(*shm).sp4);
 			(*shm).ordering[cashierNumber] = 0;
 			(*shm).ordering_clients[cashierNumber] = 0;
 			
-			printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
+			// printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
 			sem_post(&(*shm).sp3);
 		}
 	}
 
-	printf("Cashier %d finishes work.\n", cashierNumber);
+	// printf("Cashier %d finishes work.\n", cashierNumber);
 	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 
 	return 0;

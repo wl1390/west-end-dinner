@@ -3,9 +3,17 @@
 
 #define MaxNumOfClients	  	50
 #define MaxNumOfCashiers  	3
-#define SERVICETIME			5
-#define BREAKTIME			20	
-#define SERVERTIME			5	
+#define SERVICETIME			2
+#define BREAKTIME			1	
+#define SERVERTIME			1
+
+struct Menu
+{
+	char *item[64];
+	float price[64];
+	int minTime[64];
+	int maxTime[64];
+};
 
 struct SharedMemory
 {
@@ -21,6 +29,7 @@ struct SharedMemory
 	int ready;
 	int waiting;
 	int wantfood;
+	struct Menu menu;
 	sem_t sp1; //locks when client enters/leaves restaurant
 	sem_t sp2; //locks when there is client in the restaurant
 	sem_t sp3; //locks when there is no cashier available 
@@ -42,6 +51,38 @@ void getSharedMemory(int *shmid)
 }
 
 // All operations on the shared memory happens here 
+
+void parser(const char *cmdline, char **argv){
+	char *ptr;
+	char *sptr;
+	int c = 0;
+	int i;
+
+	ptr = strdup(cmdline);
+
+	while(*ptr && (*ptr == ' ')) ptr++;
+
+	for (i = 0; i < strlen(ptr); i++){
+		if (ptr[strlen(ptr) - i] != ','){
+			ptr[strlen(ptr)] = '\0';
+			break;
+		}
+	}
+
+	sptr = strchr(ptr, ',');
+
+	while(sptr){
+		argv[c++] = ptr;
+		*sptr = '\0';
+		ptr = sptr + 1;
+		while(*ptr && (*ptr == ' ')) ptr++;
+		sptr = strchr(ptr, ',');
+	}
+
+	argv[c] = NULL;
+	return;
+}
+
 
 int initiateSharedMemory(struct SharedMemory *shm){
 
@@ -75,6 +116,30 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	sem_init(&(*shm).sp6,1,1);
 	sem_init(&(*shm).sp7,1,1);
 
+	int p = 1;
+	FILE *fp;
+	char buffer[64];
+	fp = fopen("menu.csv", "r");
+
+	bzero(buffer, 64);
+	fscanf(fp,"%s", buffer);
+
+	while(strcmp(buffer, ""))
+	{
+		char *argv[6];
+    	parser(buffer, argv);
+
+		(*shm).menu.item[p] = argv[1];
+		(*shm).menu.price[p] = atof(argv[2]);
+		(*shm).menu.minTime[p] = atoi(argv[3]);
+		(*shm).menu.maxTime[p] = atoi(argv[4]);
+		
+ 		free(argv[0]);
+		bzero(buffer, 64);
+		fscanf(fp,"%s", buffer);
+
+		p++;
+	}
 
 	return 1;
 }
@@ -91,11 +156,6 @@ int destroySharedMemory(struct SharedMemory *shm){
 	return 1;
 }
 
-int getWaitingTime(int itemId)
-{
-	//needs to implement 
-	return 5;
-}
 
 int clientEnter(struct SharedMemory *shm, int pid)
 {	
