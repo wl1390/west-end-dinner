@@ -25,9 +25,11 @@ int main(int argc, char **argv)
 		if ((*shm).server_busy != 0)
 		{	
 			int temp = rand()%SERVERTIME + 1;
-			printf("Server serving: %d seconds ...\n", temp);
+			printf("Server serving ...\n");
 			sleep(temp);
 			(*shm).server_busy = 0;
+			printf("Server finishes: %d seconds.\n", temp);
+
 		}
 
 	}

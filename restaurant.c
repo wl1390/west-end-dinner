@@ -144,7 +144,6 @@ void analyze(struct SharedMemory *shm)
 
 	while(strcmp(buffer, ""))
 	{
-		printf("buffer read is now %s\n", buffer);
 		char *argv[3];
     	parser(buffer, argv);
 
@@ -180,7 +179,6 @@ void analyze(struct SharedMemory *shm)
 
 	while(strcmp(buffer, ""))
 	{
-		printf("buffer read is now %s\n", buffer);
 		char *argv[3];
     	parser(buffer, argv);
 	
@@ -208,7 +206,11 @@ void analyze(struct SharedMemory *shm)
 
 	fclose(fp);
 
+	remove("database_client");
+	remove("database_cashier");
+
 	/* Create aggregated data file and running analysis */
+	/* Data in format client id, order, price, eatingTime, totalTime */
 	fp = fopen("data", "w");
 	
 	for (i = 0; i < (*shm).total_clients; i++) 
@@ -223,33 +225,45 @@ void analyze(struct SharedMemory *shm)
 
 	averageWaitingTime = averageWaitingTime/(*shm).total_clients;
 
-	//item[i] is a list of all occurances
-	//mostPopular shoudl choose the index of the top Five
+	int min = 0;
+	int minItemPosition = 0;
+
 	for (i = 1; i <= (*shm).menu.item_count; i++)
 	{
-		for (j = 0; j < 5; j++)
+		if (item[i] > min)
 		{
-			if (item[mostPopular[j]] < item[i])
+			mostPopular[minItemPosition] = i;
+			min = item[mostPopular[0]];
+			minItemPosition = 0;
+
+			for (j = 1; j < 5; j++)
 			{
-				mostPopular[j] = i;
-				break;
+				if (item[mostPopular[j]] < min)
+				{
+					min = item[mostPopular[j]];
+					minItemPosition = j;
+				}
 			}
 		}
+
 	}
 
 	/* printing analytics */
 	printf("###################################\n");
 	printf("Average waiting time is %d second.\n", averageWaitingTime);
-	printf("Total Revenue is %d.\n", totalMoney);
+	printf("Total Revenue is %.2f.\n", (double)totalMoney/100);
 	printf("total clients is %d.\n", (*shm).total_clients);
 	printf("Most popular items are ");
 	for (i = 0; i < 5; i++)
 	{
-		printf("%d ", mostPopular[i]);
-		mostPopularRevenue += mostPopular[i] * (*shm).menu.price[mostPopular[i]];		
+		if (mostPopular[i] != 0)
+		{
+			printf("%d ", mostPopular[i]);
+			mostPopularRevenue += item[mostPopular[i]] * (*shm).menu.price[mostPopular[i]];		
+		}
 	}
 	printf("\n");
-	printf("They generated %d in total.\n", mostPopularRevenue);
+	printf("They generated %.2f in total.\n", (double)mostPopularRevenue/100);
 	printf("###################################\n");
 
 	return;
@@ -309,15 +323,13 @@ int main(int argc, char **argv)
 	}
 
 	getchar();
-
-	printf("Closing the restaurant\n");
 	sem_wait(&(*shm).sp2);
 	(*shm).restaurant_is_open = 0;
 	sem_post(&(*shm).sp2);
 
 	while(wait(NULL) > 0);
 
-	printf("Day Complete. Analyzing data ...\n");
+	printf("Closing the restaurant. Analyzing data ...\n");
 	analyze(shm);
 	
 	/* Remove segment */

@@ -3,9 +3,9 @@
 
 #define MaxNumOfClients	  	50
 #define MaxNumOfCashiers  	3
-#define SERVICETIME			4
+#define SERVICETIME			7
 #define BREAKTIME			10	
-#define SERVERTIME			3
+#define SERVERTIME			2
 
 struct Menu
 {	int item_count;

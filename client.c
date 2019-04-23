@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 	while((*shm).server_busy != 0) continue;
 	sem_post(&(*shm).sp6);
 
-	printf("Client %d is eating ...", pid);
+	printf("Client %d is eating ...\n", pid);
 	eating_time = rand()%eatTime + 1;
 	sleep(eating_time);
 
