@@ -36,3 +36,4 @@ clean:
 	rm -f memoryId
 	rm -f database_client
 	rm -f database_cashier
+	rm -f data

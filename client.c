@@ -127,7 +127,8 @@ int main(int argc, char **argv)
 	sem_wait(&(*shm).sp8);
 	FILE *fp;
 	fp = fopen("database_client","a");
-	fprintf(fp, "%d,%d,%d,\n", pid, totalTime,realEat);
+	printf("writing %d,%d,%d,\n\n",pid, totalTime,totalTime-realEat);
+	fprintf(fp, "%d,%d,%d,\n", pid, totalTime,totalTime-realEat);
 	fclose(fp);
 	sem_post(&(*shm).sp8);
 

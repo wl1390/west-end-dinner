@@ -79,7 +79,142 @@ int main(int argc, char **argv)
 	printf("all worker done ...\n");
 	
 
-	//TODO collect data  and analyze
+	//ANALYZE DATA
+
+	printf("start ANALYZE\n");
+
+	FILE *data_client, *data_cashier;
+	char buffer[64];
+	data_client = fopen("database_client", "r");
+	data_cashier = fopen("database_cashier", "r");	
+	
+	int k;
+	int data[(*shm).totalClients][5];
+	for (k = 0; k  < (*shm).totalClients; k++)
+		bzero(data[k], 5*sizeof(int));
+
+	bzero(buffer, 64);
+	fscanf(data_cashier,"%s", buffer);
+
+	while(strcmp(buffer, ""))
+	{
+		printf("buffer read is now %s\n", buffer);
+		char *argv[3];
+    	parser(buffer, argv);
+
+    	int j;
+    	k = -1;
+    	for (j = 0; j <  (*shm).totalClients; j++)
+    	{
+    		if (k == -1 && data[j][0] == 0) 
+    			k = j;
+
+    		if (data[j][0] == atoi(argv[0]))
+    		{
+    			k = j;
+    			break;
+    		}
+    	}
+
+		data[k][0] = atoi(argv[0]);
+    	data[k][1] = atoi(argv[1]);
+    	data[k][2] = atoi(argv[2]);
+	
+ 		free(argv[0]);
+		bzero(buffer, 64);
+		fscanf(data_cashier,"%s", buffer);
+	}
+
+	fclose(data_cashier);
+
+	bzero(buffer, 64);
+	fscanf(data_client,"%s", buffer);
+
+	while(strcmp(buffer, ""))
+	{
+		printf("buffer read is now %s\n", buffer);
+		char *argv[3];
+    	parser(buffer, argv);
+		
+		int j;
+    	k = -1;
+    	for (j = 0; j <  (*shm).totalClients; j++)
+    	{
+    		if (k == -1 && data[j][0] == 0) 
+    			k = j;
+    		
+    		if (data[j][0] == atoi(argv[0]))
+    		{
+    			k = j;
+    			break;
+    		}
+    	}
+
+		data[k][0] = atoi(argv[0]);
+    	data[k][3] = atoi(argv[1]);
+    	data[k][4] = atoi(argv[2]);
+	
+ 		free(argv[0]);
+		bzero(buffer, 64);
+		fscanf(data_client,"%s", buffer);
+	}
+
+	fclose(data_client);
+	
+	int averageWaitingTime = 0;
+	int totalMoney = 0;
+	int item[(*shm).menu.count];
+	bzero(item, (*shm).menu.count * sizeof(int));
+
+
+	FILE *hey;
+	hey = fopen("data", "w");
+	
+
+
+	for (k = 0; k < (*shm).totalClients; k++) 
+	{
+		fprintf(hey,"%d %d %d %d %d\n", data[k][0],data[k][1],data[k][2],data[k][3],data[k][4]);
+		averageWaitingTime += data[k][4];
+		totalMoney += data[k][2];
+		item[data[k][1]]++;
+
+		
+	}
+	
+	fclose(hey);
+
+	averageWaitingTime = averageWaitingTime/(*shm).totalClients;
+
+	int topFive[5];
+	int topFiveCount[5];
+	bzero(topFive, 5*sizeof(int));	
+	bzero(topFiveCount, 5*sizeof(int));
+
+	for (k = 0; k < (*shm).menu.count; k++)
+	{
+		int x;
+		for (x = 0; x < 5; x++)
+		{
+			if (topFiveCount[x]<item[k])
+			{
+				topFiveCount[x] = item[k];
+				topFive[x] = k;
+				break;
+			}
+		}
+	}
+
+	int y;
+	for (y=0;y<5;y++){
+		printf("top 5 is %d\n",topFive[y]);
+		topFiveCount[y] = topFiveCount[y] * (*shm).menu.price[topFive[y]];
+		printf("moeny made is is %d\n", topFiveCount[y]);
+	}
+
+	printf("averageWaitingTime is %d\n", averageWaitingTime);
+	printf("total money is %d\n", totalMoney);
+	printf("total clients is %d\n", (*shm).totalClients);
 
 	/* Remove segment */
 	destroySharedMemory(shm);

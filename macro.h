@@ -9,7 +9,7 @@
 
 struct Menu
 {	int count;
-	float price[64];
+	int price[64];
 	int minTime[64];
 	int maxTime[64];
 };
@@ -28,6 +28,7 @@ struct SharedMemory
 	int ready;
 	int waiting;
 	int wantfood;
+	int totalClients;
 	struct Menu menu;
 	sem_t sp1; //locks when client enters/leaves restaurant
 	sem_t sp2; //locks when there is client in the restaurant
@@ -93,6 +94,8 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	(*shm).numOfClients = 0;
 	(*shm).open = 0;
 	(*shm).wantfood = 0;
+	(*shm).totalClients = 0;
+
 
 	for (i = 0; i < MaxNumOfClients; i++)
 	{
@@ -131,7 +134,7 @@ int initiateSharedMemory(struct SharedMemory *shm){
 
 		char *argv[6];
     	parser(buffer, argv);
-		(*shm).menu.price[p] = atof(argv[2]);
+		(*shm).menu.price[p] = atoi(argv[2]);
 		(*shm).menu.minTime[p] = atoi(argv[3]);
 		(*shm).menu.maxTime[p] = atoi(argv[4]);
 		
@@ -185,6 +188,7 @@ int clientEnter(struct SharedMemory *shm, int pid)
 		}	
 	}
 
+	(*shm).totalClients++;
 	sem_post(&(*shm).sp1);
 
 	return 1;

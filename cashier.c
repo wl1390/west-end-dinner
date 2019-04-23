@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 			sem_wait(&(*shm).sp5);
 			FILE *fp;
 			fp = fopen("database_cashier","a");
-			fprintf(fp, "%d,%d,%f,\n",client, order,(*shm).menu.price[order]);
+			fprintf(fp, "%d,%d,%d,\n",client, order,(*shm).menu.price[order]);
 			fclose(fp);
 			sem_post(&(*shm).sp5);
 		}
