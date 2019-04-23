@@ -83,9 +83,9 @@ int initiateSharedMemory(struct SharedMemory *shm){
 		char *argv[6];
     	parser(buffer, argv);
 
-		(*shm).menu.price[p] = atoi(argv[2]);
-		(*shm).menu.minTime[p] = atoi(argv[3]);
-		(*shm).menu.maxTime[p] = atoi(argv[4]);
+		(*shm).menu.price[i] = atoi(argv[2]);
+		(*shm).menu.minTime[i] = atoi(argv[3]);
+		(*shm).menu.maxTime[i] = atoi(argv[4]);
 		
  		free(argv[0]);
 
@@ -112,7 +112,7 @@ int destroySemaphores(struct SharedMemory *shm)
 	return 1;
 }
 
-void analyze()
+void analyze(struct SharedMemory *shm)
 {
 	int i, j;
 	FILE *fp;
@@ -121,16 +121,18 @@ void analyze()
 	int data[(*shm).total_clients][5];
 	int averageWaitingTime = 0;
 	int totalMoney = 0;
-	int item[(*shm).menu.item_count];
+	int item[(*shm).menu.item_count + 1];
 	int mostPopularRevenue = 0;
 
-	int mostPopular[5][2];
+	int mostPopular[5];
+
 	for (i = 0; i < 5; i++)
 	{
-		bzero(mostPopular[i][2], 2 * sizeof(int));
+		mostPopular[i] = 0;
 	}
+//no need for a double list change!!!
 
-	bzero(item, (*shm).menu.item_count * sizeof(int));
+	bzero(item, ((*shm).menu.item_count + 1) * sizeof(int));
 	for (i = 0; i  < (*shm).total_clients; i++)
 		bzero(data[i], 5*sizeof(int));
 	
@@ -221,14 +223,15 @@ void analyze()
 
 	averageWaitingTime = averageWaitingTime/(*shm).total_clients;
 
-	for (i = 0; i < (*shm).menu.item_count; i++)
+	//item[i] is a list of all occurances
+	//mostPopular shoudl choose the index of the top Five
+	for (i = 1; i <= (*shm).menu.item_count; i++)
 	{
 		for (j = 0; j < 5; j++)
 		{
-			if (mostPopular[j][1]<item[i])
+			if (item[mostPopular[j]] < item[i])
 			{
-				mostPopular[j][1] = item[i];
-				mostPopular[j][0] = i;
+				mostPopular[j] = i;
 				break;
 			}
 		}
@@ -242,8 +245,8 @@ void analyze()
 	printf("Most popular items are ");
 	for (i = 0; i < 5; i++)
 	{
-		printf("%d ", mostPopular[i][0]);
-		mostPopularRevenue += mostPopular[i][1] * (*shm).menu.price[mostPopular[i][0]];		
+		printf("%d ", mostPopular[i]);
+		mostPopularRevenue += mostPopular[i] * (*shm).menu.price[mostPopular[i]];		
 	}
 	printf("\n");
 	printf("They generated %d in total.\n", mostPopularRevenue);
