@@ -15,21 +15,24 @@ int main(int argc, char **argv)
 
 	int client, order;
 	
+	/* Attaching shared memory */
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	while((*shm).open == 1)
-	{
-		if ((*shm).waiting != 0)
+	while((*shm).restaurant_is_open == 1)
+	{	
+		/* Block for Tserver time is there is client waiting */
+		if ((*shm).server_busy != 0)
 		{	
 			int temp = rand()%SERVERTIME + 1;
 			printf("Server serving: %d seconds ...\n", temp);
 			sleep(temp);
-			(*shm).waiting = 0;
+			(*shm).server_busy = 0;
 		}
 
 	}
 
+	/* Detaching shared memory */
 	if (shmdt((void *)shm) == -1) perror ("Detachment.");
 
 	return 0;

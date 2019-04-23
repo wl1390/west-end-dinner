@@ -54,15 +54,18 @@ int load_cashier_argv(int argc, char **argv, int *cashierNumber, int *serviceTim
 
 int main(int argc, char **argv)
 {
-	int cashierNumber;
-	int serviceTime;
-	int breakTime;
-	int err;
-	int order;
-	int client;
 	struct SharedMemory *shm;
 	int shmid;
 
+	int cashierNumber;
+	int serviceTime;
+	int breakTime;
+
+	int order;
+	int client;
+	
+	int temp;
+	FILE *fp;
 
 	if (!load_cashier_argv(argc, argv, &cashierNumber, &serviceTime, &breakTime))
 	{
@@ -72,40 +75,41 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	/* Attaching shared memory */
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-	// printf("Cashier %d starts work.\n", cashierNumber);
-
 	srand(getpid());
-	while((*shm).open == 1)
+
+	while((*shm).restaurant_is_open == 1)
 	{	
 		sleep(1);
-		if ((*shm).ordering[cashierNumber] == 0)
+
+		/* If no client is waiting at the cashier desk, cashier takes a break; */
+		if ((*shm).cashier_desk[cashierNumber][0] == 0)
 		{	
-			int temp = rand()%breakTime + 1;
-			// printf("Cashier %d has no client, taking a %d second break...\n", cashierNumber, temp);
+			temp = rand()%breakTime + 1;
 			sleep(temp);
 		}
+
+		/* Cashier takes a clients order */
 		else
 		{	
-			int temp = rand()%serviceTime + 1;
-			order = (*shm).ordering[cashierNumber];
-			client = (*shm).ordering_clients[cashierNumber];
+			temp = rand()%serviceTime + 1;
+			order = (*shm).cashier_desk[cashierNumber][0];
+			client = (*shm).cashier_desk[cashierNumber][1];
 		
-			printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
+			printf("Cashier %d takes client %d. \n", cashierNumber, client);
 			sleep(temp);
 			sem_wait(&(*shm).sp4);
-			(*shm).ordering[cashierNumber] = 0;
-			(*shm).ordering_clients[cashierNumber] = 0;
-
+			(*shm).cashier_desk[cashierNumber][0] = 0;
+			(*shm).cashier_desk[cashierNumber][1] = 0;
 		
-			printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
-			
+			printf("Cashier %d finishes client %d: %d second.\n", cashierNumber, client, temp);
 			sem_post(&(*shm).sp3);
 
+			/* Cashier sends record to "database_cashier" */
 			sem_wait(&(*shm).sp5);
-			FILE *fp;
 			fp = fopen("database_cashier","a");
 			fprintf(fp, "%d,%d,%d,\n",client, order,(*shm).menu.price[order]);
 			fclose(fp);
@@ -113,8 +117,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	// printf("Cashier %d finishes work.\n", cashierNumber);
-	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
+	/* Detaching shared memory */
+	if (shmdt((void *)shm) == -1) perror ("Detachment.");
 
 	return 0;
 }

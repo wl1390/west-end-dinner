@@ -7,20 +7,265 @@
 
 #include "macro.h"
 
+void parser(const char *cmdline, char **argv){
+	char *ptr;
+	char *sptr;
+	int c = 0;
+	int i;
+
+	ptr = strdup(cmdline);
+
+	while(*ptr && (*ptr == ' ')) ptr++;
+
+	for (i = 0; i < strlen(ptr); i++){
+		if (ptr[strlen(ptr) - i] != ','){
+			ptr[strlen(ptr)] = '\0';
+			break;
+		}
+	}
+
+	sptr = strchr(ptr, ',');
+
+	while(sptr){
+		argv[c++] = ptr;
+		*sptr = '\0';
+		ptr = sptr + 1;
+		while(*ptr && (*ptr == ' ')) ptr++;
+		sptr = strchr(ptr, ',');
+	}
+
+	argv[c] = NULL;
+	return;
+}
+
+
+int initiateSharedMemory(struct SharedMemory *shm){
+
+	int i;
+	FILE *fp;
+	char buffer[64];
+
+	/* Initializing shared variables to 0 */
+
+	(*shm).restaurant_is_open = 0;
+	(*shm).total_clients = 0;
+	(*shm).clients_in_restaurant = 0;
+	(*shm).server_busy = 0;
+
+	for (i = 0; i < MaxNumOfCashiers; i++)
+	{
+		(*shm).cashier_desk[i][0] = 0;
+		(*shm).cashier_desk[i][1] = 0;
+	}
+
+	/* Initializing semaphores */
+	sem_init(&(*shm).sp1,1,1);
+	sem_init(&(*shm).sp2,1,1);
+	sem_init(&(*shm).sp3,1,MaxNumOfCashiers);
+	sem_init(&(*shm).sp4,1,1);
+	sem_init(&(*shm).sp5,1,1);
+	sem_init(&(*shm).sp6,1,1);
+	sem_init(&(*shm).sp7,1,1);
+
+	/* Load menu from "menu.csv" */
+
+	fp = fopen("menu.csv", "r");
+
+	i = 0;
+
+	bzero(buffer, 64);
+	fscanf(fp,"%s", buffer);
+	
+	while(strcmp(buffer, ""))
+	{
+		i++;
+
+		char *argv[6];
+    	parser(buffer, argv);
+
+		(*shm).menu.price[p] = atoi(argv[2]);
+		(*shm).menu.minTime[p] = atoi(argv[3]);
+		(*shm).menu.maxTime[p] = atoi(argv[4]);
+		
+ 		free(argv[0]);
+
+		bzero(buffer, 64);
+		fscanf(fp,"%s", buffer);
+	}
+
+	(*shm).menu.item_count = i;
+
+	fclose(fp);
+
+	return 1;
+}
+
+int destroySemaphores(struct SharedMemory *shm)
+{
+	sem_destroy(&(*shm).sp1);
+	sem_destroy(&(*shm).sp2);
+	sem_destroy(&(*shm).sp3);
+	sem_destroy(&(*shm).sp4);
+	sem_destroy(&(*shm).sp5);
+	sem_destroy(&(*shm).sp6);
+	sem_destroy(&(*shm).sp7);
+	return 1;
+}
+
+void analyze()
+{
+	int i, j;
+	FILE *fp;
+	char buffer[64];
+
+	int data[(*shm).total_clients][5];
+	int averageWaitingTime = 0;
+	int totalMoney = 0;
+	int item[(*shm).menu.item_count];
+	int mostPopularRevenue = 0;
+
+	int mostPopular[5][2];
+	for (i = 0; i < 5; i++)
+	{
+		bzero(mostPopular[i][2], 2 * sizeof(int));
+	}
+
+	bzero(item, (*shm).menu.item_count * sizeof(int));
+	for (i = 0; i  < (*shm).total_clients; i++)
+		bzero(data[i], 5*sizeof(int));
+	
+	/* Reading data from "database_cashier" */
+	fp = fopen("database_cashier", "r");	
+	
+	bzero(buffer, 64);
+	fscanf(fp,"%s", buffer);
+
+	while(strcmp(buffer, ""))
+	{
+		printf("buffer read is now %s\n", buffer);
+		char *argv[3];
+    	parser(buffer, argv);
+
+    	i = -1;
+    	for (j = 0; j <  (*shm).total_clients; j++)
+    	{
+    		if (i == -1 && data[j][0] == 0) 
+    			i = j;
+
+    		if (data[j][0] == atoi(argv[0]))
+    		{
+    			i = j;
+    			break;
+    		}
+    	}
+
+		data[i][0] = atoi(argv[0]);
+    	data[i][1] = atoi(argv[1]);
+    	data[i][2] = atoi(argv[2]);
+	
+ 		free(argv[0]);
+		bzero(buffer, 64);
+		fscanf(fp,"%s", buffer);
+	}
+
+	fclose(fp);
+
+	/* Reading data from "database_client" */
+	fp = fopen("database_client", "r");
+
+	bzero(buffer, 64);
+	fscanf(fp,"%s", buffer);
+
+	while(strcmp(buffer, ""))
+	{
+		printf("buffer read is now %s\n", buffer);
+		char *argv[3];
+    	parser(buffer, argv);
+	
+    	i = -1;
+    	for (j = 0; j <  (*shm).total_clients; j++)
+    	{
+    		if (i == -1 && data[j][0] == 0) 
+    			i = j;
+    		
+    		if (data[j][0] == atoi(argv[0]))
+    		{
+    			i = j;
+    			break;
+    		}
+    	}
+
+		data[i][0] = atoi(argv[0]);
+    	data[i][3] = atoi(argv[1]);
+    	data[i][4] = atoi(argv[2]);
+	
+ 		free(argv[0]);
+		bzero(buffer, 64);
+		fscanf(fp,"%s", buffer);
+	}
+
+	fclose(fp);
+
+	/* Create aggregated data file and running analysis */
+	fp = fopen("data", "w");
+	
+	for (i = 0; i < (*shm).total_clients; i++) 
+	{
+		fprintf(fp,"%d %d %d %d %d\n", data[i][0],data[i][1],data[i][2],data[i][3],data[i][4]);
+		averageWaitingTime += data[i][4];
+		totalMoney += data[i][2];
+		item[data[i][1]]++;
+	}
+	
+	fclose(fp);
+
+	averageWaitingTime = averageWaitingTime/(*shm).total_clients;
+
+	for (i = 0; i < (*shm).menu.item_count; i++)
+	{
+		for (j = 0; j < 5; j++)
+		{
+			if (mostPopular[j][1]<item[i])
+			{
+				mostPopular[j][1] = item[i];
+				mostPopular[j][0] = i;
+				break;
+			}
+		}
+	}
+
+	/* printing analytics */
+	printf("###################################\n");
+	printf("Average waiting time is %d second.\n", averageWaitingTime);
+	printf("Total Revenue is %d.\n", totalMoney);
+	printf("total clients is %d.\n", (*shm).total_clients);
+	printf("Most popular items are ");
+	for (i = 0; i < 5; i++)
+	{
+		printf("%d ", mostPopular[i][0]);
+		mostPopularRevenue += mostPopular[i][1] * (*shm).menu.price[mostPopular[i][0]];		
+	}
+	printf("\n");
+	printf("They generated %d in total.\n", mostPopularRevenue);
+	printf("###################################\n");
+
+	return;
+
+}
+
 int main(int argc, char **argv)
 {	
-	int id = 0;
-	int err = 0;
-	int i;
 	struct SharedMemory *shm;
+	int id = 0;
+	int i, j;
 	FILE *fp;
 
+	/* Create shared memory */
 	id = shmget(IPC_PRIVATE, 1, 0666|IPC_CREAT); if (id == -1) perror ("Creation");
-	
 	shm = (struct SharedMemory *) shmat(id, (void*)0, 0);
-
 	initiateSharedMemory(shm);
 	
+	/* Create relevant files */
 	fp = fopen("memoryId", "w");
 	fprintf(fp, "%d",id);
 	fclose(fp);
@@ -29,20 +274,14 @@ int main(int argc, char **argv)
 	fp = fopen("database_cashier", "w");
 	fclose(fp);
 
-
-	printf("Allocated Shared Memory with ID: %d\n",(int)id);
-
 	printf("Opening the restaurant\n");
-
 	sem_wait(&(*shm).sp2);
-	(*shm).open = 1;
+	(*shm).restaurant_is_open = 1;
 	sem_post(&(*shm).sp2);
 
-	printf("Creating cashiers and server\n");
-
+	printf("Creating %d cashiers and server\n", MaxNumOfCashiers);
 	if (fork() == 0)
 	{	
-
 		printf("starting server...\n");
 		char *serverargs[] = {"./server", NULL};
 		execvp(serverargs[0], serverargs);
@@ -53,10 +292,10 @@ int main(int argc, char **argv)
 	{
 		if (fork() == 0)
 		{
-			printf("starting cahsier %d...\n", i);
 			char cahsierNumber[16];
 			char serviceTime[16];
 			char breakTime[16];
+			printf("starting cahsier %d...\n", i);
 			sprintf(cahsierNumber, "%d", i);
 			sprintf(serviceTime, "%d", SERVICETIME);
 			sprintf(breakTime, "%d", BREAKTIME);
@@ -70,155 +309,17 @@ int main(int argc, char **argv)
 
 	printf("Closing the restaurant\n");
 	sem_wait(&(*shm).sp2);
-	(*shm).open = 0;
+	(*shm).restaurant_is_open = 0;
 	sem_post(&(*shm).sp2);
 
 	while(wait(NULL) > 0);
 
-
-	printf("all worker done ...\n");
+	printf("Day Complete. Analyzing data ...\n");
+	analyze(shm);
 	
-
-	//ANALYZE DATA
-
-	printf("start ANALYZE\n");
-
-	FILE *data_client, *data_cashier;
-	char buffer[64];
-	data_client = fopen("database_client", "r");
-	data_cashier = fopen("database_cashier", "r");	
-	
-	int k;
-	int data[(*shm).totalClients][5];
-	for (k = 0; k  < (*shm).totalClients; k++)
-		bzero(data[k], 5*sizeof(int));
-
-	bzero(buffer, 64);
-	fscanf(data_cashier,"%s", buffer);
-
-	while(strcmp(buffer, ""))
-	{
-		printf("buffer read is now %s\n", buffer);
-		char *argv[3];
-    	parser(buffer, argv);
-
-    	int j;
-    	k = -1;
-    	for (j = 0; j <  (*shm).totalClients; j++)
-    	{
-    		if (k == -1 && data[j][0] == 0) 
-    			k = j;
-
-    		if (data[j][0] == atoi(argv[0]))
-    		{
-    			k = j;
-    			break;
-    		}
-    	}
-
-		data[k][0] = atoi(argv[0]);
-    	data[k][1] = atoi(argv[1]);
-    	data[k][2] = atoi(argv[2]);
-	
- 		free(argv[0]);
-		bzero(buffer, 64);
-		fscanf(data_cashier,"%s", buffer);
-	}
-
-	fclose(data_cashier);
-
-	bzero(buffer, 64);
-	fscanf(data_client,"%s", buffer);
-
-	while(strcmp(buffer, ""))
-	{
-		printf("buffer read is now %s\n", buffer);
-		char *argv[3];
-    	parser(buffer, argv);
-		
-		int j;
-    	k = -1;
-    	for (j = 0; j <  (*shm).totalClients; j++)
-    	{
-    		if (k == -1 && data[j][0] == 0) 
-    			k = j;
-    		
-    		if (data[j][0] == atoi(argv[0]))
-    		{
-    			k = j;
-    			break;
-    		}
-    	}
-
-		data[k][0] = atoi(argv[0]);
-    	data[k][3] = atoi(argv[1]);
-    	data[k][4] = atoi(argv[2]);
-	
- 		free(argv[0]);
-		bzero(buffer, 64);
-		fscanf(data_client,"%s", buffer);
-	}
-
-	fclose(data_client);
-	
-	int averageWaitingTime = 0;
-	int totalMoney = 0;
-	int item[(*shm).menu.count];
-	bzero(item, (*shm).menu.count * sizeof(int));
-
-
-	FILE *hey;
-	hey = fopen("data", "w");
-	
-
-
-	for (k = 0; k < (*shm).totalClients; k++) 
-	{
-		fprintf(hey,"%d %d %d %d %d\n", data[k][0],data[k][1],data[k][2],data[k][3],data[k][4]);
-		averageWaitingTime += data[k][4];
-		totalMoney += data[k][2];
-		item[data[k][1]]++;
-
-		
-	}
-	
-	fclose(hey);
-
-	averageWaitingTime = averageWaitingTime/(*shm).totalClients;
-
-	int topFive[5];
-	int topFiveCount[5];
-	bzero(topFive, 5*sizeof(int));	
-	bzero(topFiveCount, 5*sizeof(int));
-
-	for (k = 0; k < (*shm).menu.count; k++)
-	{
-		int x;
-		for (x = 0; x < 5; x++)
-		{
-			if (topFiveCount[x]<item[k])
-			{
-				topFiveCount[x] = item[k];
-				topFive[x] = k;
-				break;
-			}
-		}
-	}
-
-	int y;
-	for (y=0;y<5;y++){
-		printf("top 5 is %d\n",topFive[y]);
-		topFiveCount[y] = topFiveCount[y] * (*shm).menu.price[topFive[y]];
-		printf("moeny made is is %d\n", topFiveCount[y]);
-	}
-
-	printf("averageWaitingTime is %d\n", averageWaitingTime);
-	printf("total money is %d\n", totalMoney);
-	printf("total clients is %d\n", (*shm).totalClients);
-
 	/* Remove segment */
-	destroySharedMemory(shm);
-	err = shmctl(id, IPC_RMID, 0); if (err == -1) perror ("Removal.");
+	destroySemaphores(shm);
+	if (shmctl(id, IPC_RMID, 0) == -1) perror ("Removal.");
 
 	return 0;
 }

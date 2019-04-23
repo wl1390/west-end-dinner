@@ -9,7 +9,6 @@
 
 #include "macro.h"
 
-
 int load_client_argv(int argc, char **argv, int *itemId, int *eatTime)
 {
 	int i;
@@ -47,19 +46,91 @@ int load_client_argv(int argc, char **argv, int *itemId, int *eatTime)
 	return 1;
 }
 
+/* client calls this function when entering the restaurant */
+int clientEnter(struct SharedMemory *shm, int pid)
+{	
+	/* Client must enter when the restaurent is open and not full */
+	if ((*shm).restaurant_is_open !=1||((*shm).clients_in_restaurant >= MaxNumOfClients))
+		return 0;
+
+	sem_wait(&(*shm).sp1);
+
+	if ((*shm).clients_in_restaurant == 0)
+		sem_wait(&(*shm).sp2);
+
+	(*shm).clients_in_restaurant++;
+
+	(*shm).total_clients++;
+	sem_post(&(*shm).sp1);
+
+	return 1;
+}
+
+/* client calls this function when leaving the restaurant */
+int clientLeave(struct SharedMemory *shm, int pid)
+{	
+	sem_wait(&(*shm).sp1);
+
+	(*shm).clients_in_restaurant--;
+
+	if ((*shm).clients_in_restaurant == 0)
+		sem_post(&(*shm).sp2);
+
+	sem_post(&(*shm).sp1);
+
+	return 1;
+}
+
+int order(struct SharedMemory *shm, int pid, int itemId)
+{
+	int cashier;
+	int i;
+
+	srand(pid);
+	cashier = rand() % MaxNumOfCashiers;
+
+	sem_wait(&(*shm).sp3);
+	sem_wait(&(*shm).sp4);
+
+	/* Assign client to a free cashier */
+	for (i = 0; i < MaxNumOfCashiers; i++)
+	{	
+		cashier = (cashier + 1) % MaxNumOfCashiers;
+
+		if ((*shm).cashier_desk[cashier][0] == 0)
+		{
+			(*shm).cashier_desk[cashier][0] = itemId;
+			(*shm).cashier_desk[cashier][1] = pid;
+			break;
+		}
+	}
+
+	sem_post(&(*shm).sp4);
+
+	return cashier;
+}
+
 int main(int argc, char **argv)
 {
-	int itemId;
-	int eatTime;
-	pid_t pid;
-	int err;
-	int cashier;
 	struct SharedMemory *shm;
 	int shmid;
-	time_t start;
-	int totalTime;
-	int realEat;
+
+	int itemId;
+	int eatTime;
+
+	int cashier;
 	
+	time_t start_time;
+	time_t end_time;
+	int eating_time;
+
+	FILE *fp;
+	pid_t pid;
+
+	pid = getpid();
+	srand(pid);
+
+	/* Client must be initialized with all parameters */
 	if (!load_client_argv(argc, argv, &itemId, &eatTime))
 	{
 		printf("ERROR: client initiation should follow the below format:\n");
@@ -67,71 +138,65 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	pid = getpid();
-
+	/* Attaching shared memory */
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
-
-	if (itemId < 1 || itemId > (*shm).menu.count) 
+	/* Client must order item on the menu */
+	if (itemId < 1 || itemId > (*shm).menu.item_count) 
 	{
 		printf("Item %d is not on the menu. Client leaving...\n", itemId);
 		return 0;
 	}
 
+	/* Client enters the restaurant */
 	if (clientEnter(shm, pid) == 0)
 	{
-		printf("Restaurant full. Client [%d] leaving...\n", pid);
+		printf("Restaurant full. Client [%d] leaves.\n", pid);
 		return 0;
 	}
 
-	printf("client %d enters...\n", pid);
-	start = time(NULL);
+	printf("client %d enters.\n", pid);
+	start_time = time(NULL);
 
+
+	printf("Client %d is waiting for available cashier...\n", pid);
 	cashier = order(shm, pid, itemId);
 
-	while((*shm).ordering[cashier] != 0) continue;
+	printf("Client %d is talking to cashier %d...\n", pid,cashier);
+	while((*shm).cashier_desk[cashier][0] != 0) continue;
 	sem_post(&(*shm).sp4);
 
-	printf("client finishes ordering\n");
+	printf("Client %d finishes ordering\n", pid);
 
-	srand(pid);
-	
 	int temp = rand() % ((*shm).menu.maxTime[itemId] - (*shm).menu.minTime[itemId]) + (*shm).menu.minTime[itemId];
 
-
-	printf("client waiting for %d second for food to be ready...\n", temp);
+	printf("Client %d is waiting for food ...\n", pid);
 	sleep(temp);
 
-	printf("food ready. waiting for server now...\n");
-
+	printf("Client %d is waiting for server ...\n", pid);
 	sem_wait(&(*shm).sp6);
-	(*shm).waiting = 1;
-	printf("server is servicing...\n");
-	while((*shm).waiting != 0) continue;
+	(*shm).server_busy = 1;
+	printf("Server is serving food ...\n");
+	while((*shm).server_busy != 0) continue;
 	sem_post(&(*shm).sp6);
 
-	srand(pid);
-	realEat = rand()%eatTime + 1;
+	printf("Client %d is eating ...", pid);
+	eating_time = rand()%eatTime + 1;
+	sleep(eating_time);
 
-	printf("food ready, eat.");
-
-	sleep(realEat);
-
-	totalTime = (int)(time(NULL)-start);
+	printf("Client %d leaves...\n", pid);
+	clientLeave(shm, pid);
+	
+	/* Send time data to "database_client" */
+	end_time = time(NULL);
+	sem_wait(&(*shm).sp7);
+	fp = fopen("database_client","a");
+	fprintf(fp, "%d,%d,%d,\n", pid, (int)(end_time - start_time), (int)(end_time - start_time) - eating_time);
+	fclose(fp);
+	sem_post(&(*shm).sp7);
 
 	/* Detach segment */
-	clientLeave(shm, pid);
-	printf("client %d leaves...\n", pid);
-
-	sem_wait(&(*shm).sp8);
-	FILE *fp;
-	fp = fopen("database_client","a");
-	printf("writing %d,%d,%d,\n\n",pid, totalTime,totalTime-realEat);
-	fprintf(fp, "%d,%d,%d,\n", pid, totalTime,totalTime-realEat);
-	fclose(fp);
-	sem_post(&(*shm).sp8);
-
-	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
+	if (shmdt((void *)shm) == -1) perror ("Detachment.");
 	return 0;
 }
