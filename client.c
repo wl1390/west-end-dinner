@@ -5,6 +5,7 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "macro.h"
 
@@ -55,6 +56,9 @@ int main(int argc, char **argv)
 	int cashier;
 	struct SharedMemory *shm;
 	int shmid;
+	time_t start;
+	int totalTime;
+	int realEat;
 	
 	if (!load_client_argv(argc, argv, &itemId, &eatTime))
 	{
@@ -82,6 +86,7 @@ int main(int argc, char **argv)
 	}
 
 	printf("client %d enters...\n", pid);
+	start = time(NULL);
 
 	cashier = order(shm, pid, itemId);
 
@@ -107,15 +112,24 @@ int main(int argc, char **argv)
 	sem_post(&(*shm).sp6);
 
 	srand(pid);
-	temp = rand()%eatTime + 1;
+	realEat = rand()%eatTime + 1;
 
 	printf("food ready, eat.");
 
-	sleep(temp);
+	sleep(realEat);
+
+	totalTime = (int)(time(NULL)-start);
 
 	/* Detach segment */
 	clientLeave(shm, pid);
 	printf("client %d leaves...\n", pid);
+
+	sem_wait(&(*shm).sp8);
+	FILE *fp;
+	fp = fopen("database_client","a");
+	fprintf(fp, "%d,%d,%d,\n", pid, totalTime,realEat);
+	fclose(fp);
+	sem_post(&(*shm).sp8);
 
 	err = shmdt((void *)shm); if (err == -1) perror ("Detachment.");
 	return 0;

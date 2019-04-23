@@ -36,6 +36,7 @@ struct SharedMemory
 	sem_t sp5; 
 	sem_t sp6; //locks to notify cleint waiting time
 	sem_t sp7; // locks to give client food
+	sem_t sp8;
 
 };
 
@@ -114,6 +115,7 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	sem_init(&(*shm).sp5,1,1);
 	sem_init(&(*shm).sp6,1,1);
 	sem_init(&(*shm).sp7,1,1);
+	sem_init(&(*shm).sp8,1,1);
 
 	int p = 0;
 	FILE *fp;
@@ -140,6 +142,9 @@ int initiateSharedMemory(struct SharedMemory *shm){
 
 	(*shm).menu.count = p;
 
+	fclose(fp);
+
+
 	return 1;
 }
 
@@ -152,6 +157,7 @@ int destroySharedMemory(struct SharedMemory *shm){
 	sem_destroy(&(*shm).sp5);
 	sem_destroy(&(*shm).sp6);
 	sem_destroy(&(*shm).sp7);
+	sem_destroy(&(*shm).sp8);
 	return 1;
 }
 

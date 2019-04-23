@@ -24,9 +24,11 @@ int main(int argc, char **argv)
 	fp = fopen("memoryId", "w");
 	fprintf(fp, "%d",id);
 	fclose(fp);
-
-	fp = fopen("database", "w");
+	fp = fopen("database_client", "w");
 	fclose(fp);
+	fp = fopen("database_cashier", "w");
+	fclose(fp);
+
 
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
 
