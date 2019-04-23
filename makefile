@@ -34,3 +34,4 @@ clean:
 	rm -f cashier.o
 	rm -f cashier
 	rm -f memoryId
+	rm -f database

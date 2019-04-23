@@ -68,6 +68,13 @@ int main(int argc, char **argv)
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
 
+
+	if (itemId < 1 || itemId > (*shm).menu.count) 
+	{
+		printf("Item %d is not on the menu. Client leaving...\n", itemId);
+		return 0;
+	}
+
 	if (clientEnter(shm, pid) == 0)
 	{
 		printf("Restaurant full. Client [%d] leaving...\n", pid);

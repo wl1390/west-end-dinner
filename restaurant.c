@@ -25,6 +25,9 @@ int main(int argc, char **argv)
 	fprintf(fp, "%d",id);
 	fclose(fp);
 
+	fp = fopen("database", "w");
+	fclose(fp);
+
 	printf("Allocated Shared Memory with ID: %d\n",(int)id);
 
 	printf("Opening the restaurant\n");
@@ -32,8 +35,6 @@ int main(int argc, char **argv)
 	sem_wait(&(*shm).sp2);
 	(*shm).open = 1;
 	sem_post(&(*shm).sp2);
-
-	//TODO load the menu into shared memory
 
 	printf("Creating cashiers and server\n");
 

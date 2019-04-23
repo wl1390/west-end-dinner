@@ -74,7 +74,6 @@ int main(int argc, char **argv)
 
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
-	
 
 	// printf("Cashier %d starts work.\n", cashierNumber);
 
@@ -93,22 +92,24 @@ int main(int argc, char **argv)
 			int temp = rand()%serviceTime + 1;
 			order = (*shm).ordering[cashierNumber];
 			client = (*shm).ordering_clients[cashierNumber];
-			
-			// sem_wait(&(*shm).sp5);
-			// //communicate to the server might not be necessary
-			// (*shm).count++;
-			// (*shm).waiting_clients[(*shm).start] = client;
-			// (*shm).orders[(*shm).start] = order;
-			// //also add to file
-			// sem_post(&(*shm).sp5);
-			// printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
+		
+			printf("Cashier %d takes client %d in %d seconds...\n", cashierNumber, client, temp);
 			sleep(temp);
 			sem_wait(&(*shm).sp4);
 			(*shm).ordering[cashierNumber] = 0;
 			(*shm).ordering_clients[cashierNumber] = 0;
+
+		
+			printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
 			
-			// printf("Cashier %d finishes with client %d...\n", cashierNumber, client);
 			sem_post(&(*shm).sp3);
+
+			sem_wait(&(*shm).sp5);
+			FILE *fp;
+			fp = fopen("database","a");
+			fprintf(fp, "%d,%d,%f,\n",client, order,(*shm).menu.price[order]);
+			fclose(fp);
+			sem_post(&(*shm).sp5);
 		}
 	}
 

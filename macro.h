@@ -8,8 +8,7 @@
 #define SERVERTIME			1
 
 struct Menu
-{
-	char *item[64];
+{	int count;
 	float price[64];
 	int minTime[64];
 	int maxTime[64];
@@ -34,7 +33,7 @@ struct SharedMemory
 	sem_t sp2; //locks when there is client in the restaurant
 	sem_t sp3; //locks when there is no cashier available 
 	sem_t sp4; //locks when client is ordering 
-	sem_t sp5; //locks between cashiers and server
+	sem_t sp5; 
 	sem_t sp6; //locks to notify cleint waiting time
 	sem_t sp7; // locks to give client food
 
@@ -116,7 +115,7 @@ int initiateSharedMemory(struct SharedMemory *shm){
 	sem_init(&(*shm).sp6,1,1);
 	sem_init(&(*shm).sp7,1,1);
 
-	int p = 1;
+	int p = 0;
 	FILE *fp;
 	char buffer[64];
 	fp = fopen("menu.csv", "r");
@@ -126,10 +125,10 @@ int initiateSharedMemory(struct SharedMemory *shm){
 
 	while(strcmp(buffer, ""))
 	{
+		p++;
+
 		char *argv[6];
     	parser(buffer, argv);
-
-		(*shm).menu.item[p] = argv[1];
 		(*shm).menu.price[p] = atof(argv[2]);
 		(*shm).menu.minTime[p] = atoi(argv[3]);
 		(*shm).menu.maxTime[p] = atoi(argv[4]);
@@ -137,9 +136,9 @@ int initiateSharedMemory(struct SharedMemory *shm){
  		free(argv[0]);
 		bzero(buffer, 64);
 		fscanf(fp,"%s", buffer);
-
-		p++;
 	}
+
+	(*shm).menu.count = p;
 
 	return 1;
 }
