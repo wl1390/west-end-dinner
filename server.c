@@ -10,31 +10,27 @@
 
 int main(int argc, char **argv)
 {
-	int err;
 	struct SharedMemory *shm;
-	int client;
-	int order;
 	int shmid;
 
+	int client, order;
+	
 	getSharedMemory(&shmid);
 	shm = (struct SharedMemory *) shmat(shmid, (void*) 0, 0);
-
-	printf("server starts working...\n");
-
 
 	while((*shm).open == 1)
 	{
 		if ((*shm).waiting != 0)
 		{	
 			int temp = rand()%SERVERTIME + 1;
-			printf("sleeping %d to serviign \n", temp);
+			printf("Server serving: %d seconds ...\n", temp);
 			sleep(temp);
 			(*shm).waiting = 0;
 		}
 
 	}
 
-	printf("server finishes working...\n");
+	if (shmdt((void *)shm) == -1) perror ("Detachment.");
 
 	return 0;
 }
